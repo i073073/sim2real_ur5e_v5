@@ -1,0 +1,20 @@
+# ur5e_sim2real/config/ur5e_tcp_offset.xacro
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- UR5e 기본 URDF 로드 -->
+  <xacro:include filename="$(find ur_description)/urdf/ur5e.urdf.xacro" />
+
+  <!-- 50mm TCP 오프셋 정의 -->
+  <!-- wrist_3_link의 Z축 방향으로 50mm (0.05m) 떨어진 위치에 tcp_link를 정의합니다. -->
+  <link name="tcp_link"/>
+  <joint name="tcp_joint" type="fixed">
+    <parent link="wrist_3_link"/>
+    <child link="tcp_link"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+  </joint>
+
+  <!-- 로봇 모델 인스턴스화 -->
+  <xacro:ur5e_robot />
+
+</robot>

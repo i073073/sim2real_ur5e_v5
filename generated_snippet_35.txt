@@ -1,0 +1,111 @@
+
+**MLflow Tracking Report Summary**
+
+| Metric | Value | Interpretation |
+| :--- | :--- | :--- |
+| `rmse` | 0.0031 rad | 모델의 궤적 추종 오차. |
+| `r2_score` | 0.998 | 모델 설명력. |
+| `model_type` | Imitation Model | 학습된 모델 유형. |
+| `architecture` | MLP | 모델 아키텍처. |
+
+**MLOps 관점의 이점:**
+
+*   **모델 버전 관리:** MLflow Model Registry를 사용하여 이 모방 모델을 "UR5e_Imitation_Policy_v1.0"으로 등록할 수 있습니다.
+*   **성능 추적:** 향후 데이터셋이 변경되거나 모델 아키텍처가 개선될 때마다 MLflow에 새로운 실행을 기록하여, 모델 성능 변화를 시계열로 비교 분석할 수 있습니다.
+*   **Sim2Real Gap 모니터링 연동:** [MLOps Sim2Real Gap Analysis]에서 도출된 `sim2real_overall_rmse` 지표와 `imitation_model_rmse` 지표를 비교하여, 데이터 품질 변화가 모델 성능에 미치는 영향을 정량적으로 파악할 수 있습니다. 예를 들어, 데이터 품질이 떨어지면 `imitation_model_rmse`도 증가하는 경향을 보일 것입니다.
+
+--- TASK 9 RAW OUTPUT ---
+
+**QA Engineer Test Plan: Sim2Real 동작 일치도 검증 및 오차 분석 방법론**
+
+**1. Sim2Real 동작 일치도 메트릭 정의서**
+
+**1.1. 개요**
+
+Sim2Real(시뮬레이션-실환경 전환) 동작 일치도는 시뮬레이션 환경에서 개발 및 테스트된 로봇 제어 로직이 실제 로봇 하드웨어에서 얼마나 정확하게 재현되는지를 정량적으로 측정하는 핵심 지표입니다. 이 문서에서는 UR5e 로봇 시스템의 Sim2Real 일치도를 평가하기 위한 주요 메트릭을 정의합니다.
+
+**1.2. 핵심 메트릭 정의**
+
+**메트릭 1: Trajectory Tracking Error (궤적 추종 오차)**
+
+*   **정의:** Planning Agent가 수립한 목표 궤적(`TrajectoryCommand`)과 Execution Agent가 실제로 실행한 궤적(로봇의 `actual_q` 데이터) 간의 차이입니다. 이 오차는 시뮬레이션 환경과 실제 환경에서 각각 측정되어야 합니다.
+*   **측정 단위:** 라디안(rad) 또는 미터(m).
+*   **계산 방법:**
+    *   **RMSE (Root Mean Squared Error):** 궤적의 모든 시점에서 목표값과 실제값의 차이를 제곱하여 평균낸 후 제곱근을 취합니다.
+        *   $RMSE = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (q_{actual,i} - q_{target,i})^2}$
+    *   **MAE (Mean Absolute Error):** 궤적의 모든 시점에서 목표값과 실제값의 절대 오차를 평균냅니다.
+        *   $MAE = \frac{1}{N} \sum_{i=1}^{N} |q_{actual,i} - q_{target,i}|$
+    *   **Max Absolute Error:** 궤적의 모든 시점에서 발생한 최대 절대 오차입니다. 안전성 검증에 중요합니다.
+
+**메트릭 2: Sim2Real Gap (시뮬레이션-실환경 오차)**
+
+*   **정의:** 동일한 `TrajectoryCommand`를 시뮬레이션 환경과 실제 환경에서 실행했을 때, 두 환경에서 기록된 로봇 궤적 간의 차이입니다. 이 메트릭은 시뮬레이터의 물리 모델 정확도를 직접적으로 평가합니다.
+*   **측정 단위:** 라디안(rad) 또는 미터(m).
+*   **계산 방법:**
+    *   **RMSE (Sim vs Real):** 시뮬레이션 궤적($q_{sim}$)과 실제 궤적($q_{real}$) 간의 RMSE를 계산합니다.
+        *   $RMSE_{sim2real} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (q_{sim,i} - q_{real,i})^2}$
+    *   **Max Absolute Error (Sim vs Real):** 두 궤적 간의 최대 절대 오차입니다.
+
+**1.3. 세부 측정 항목**
+
+| 측정 항목 | 설명 | 측정 단위 | 중요도 |
+| :--- | :--- | :--- | :--- |
+| **Joint Position Error** | 각 관절의 위치(rad) 오차. 궤적의 정확한 형상 추종 능력 평가. | rad | 높음 |
+| **Joint Velocity Error** | 각 관절의 속도(rad/s) 오차. 동역학적 일치도 평가. | rad/s | 높음 |
+| **End-Effector Pose Error** | TCP(Tool Center Point)의 Cartesian 좌표(x, y, z) 및 방향(rx, ry, rz) 오차. 작업 공간에서의 정확도 평가. | m, rad | 높음 |
+| **Execution Time Difference** | 궤적 실행에 소요된 총 시간. 시뮬레이션과 실제 환경 간의 시간적 동기화 평가. | s | 중간 |
+| **Torque/Force Error** | 각 관절의 토크 또는 엔드 이펙터의 힘/토크 센서 값 오차. (시뮬레이터가 동역학 모델을 지원할 경우) | Nm, N | 높음 |
+
+**1.4. 허용 오차 기준 (Acceptance Criteria)**
+
+*   **Joint Position Error (RMSE):** < 0.01 rad (약 0.57도)
+*   **End-Effector Pose Error (RMSE):** < 0.005 m (5 mm)
+*   **Max Absolute Error (Safety Critical):** < 0.02 rad (약 1.15도)
+
+**2. Sim2Real 오차 분석 방법론 수립**
+
+**2.1. 오차 분석 절차서**
+
+Sim2Real Gap 분석은 다음 5단계의 표준 절차를 따릅니다.
+
+**단계 1: 테스트 시나리오 정의 및 데이터 수집**
+
+*   **목표:** 시뮬레이션과 실제 환경에서 동일한 제어 명령을 실행하여 비교 가능한 데이터셋을 확보합니다.
+*   **절차:**
+    1.  **테스트 궤적 생성:** Planning Agent를 통해 단순한 PTP(Point-to-Point) 이동, 직선 이동(moveL), 원호 이동 등 다양한 유형의 궤적을 생성합니다.
+    2.  **데이터 로깅 활성화:** `ur_rtde_client.py`의 로깅 기능을 사용하여 시뮬레이션 환경(URSim)과 실제 환경(UR5e)에서 각각 궤적 실행 중의 `actual_q` 데이터를 100Hz 이상의 주파수로 기록합니다. (데이터 파일: `sim_log.csv`, `real_log.csv`)
+    3.  **환경 조건 통제:** 테스트 시나리오가 동일한 초기 상태(로봇 위치, 환경 객체 배치)에서 시작되도록 보장합니다.
+
+**단계 2: 데이터 전처리 및 정렬 (Data Alignment)**
+
+*   **목표:** 시뮬레이션 데이터와 실제 데이터를 시간 축에 맞춰 동기화합니다.
+*   **절차:**
+    1.  **타임스탬프 정규화:** 각 데이터셋의 시작 시점을 0으로 정규화합니다.
+    2.  **데이터 보간 (Interpolation):** 시뮬레이션과 실제 로봇의 데이터 샘플링 주기가 다를 경우, 선형 보간법(Linear Interpolation)을 사용하여 두 데이터셋을 공통 타임스탬프 그리드에 맞춥니다. (예: 100Hz로 리샘플링)
+    3.  **데이터 프레임 병합:** 정렬된 두 데이터셋을 하나의 데이터 프레임으로 병합하여 비교 준비를 완료합니다.
+
+**단계 3: 정량적 메트릭 계산 및 시각화**
+
+*   **목표:** 정의된 메트릭을 계산하고, 시각화를 통해 오차 패턴을 식별합니다.
+*   **절차:**
+    1.  **메트릭 계산:** `sim2real_replay/comparison_analyzer.py` 스크립트를 사용하여 `RMSE_{sim2real}` 및 `Max Absolute Error`를 계산합니다.
+    2.  **궤적 시각화:** Matplotlib 또는 Rviz를 사용하여 실제 궤적과 시뮬레이션 궤적을 동일한 그래프에 오버레이하여 시각화합니다. (각 관절별, 또는 End-Effector Cartesian 좌표별)
+
+**단계 4: Root Cause Analysis (RCA) - 오차 원인 분석**
+
+*   **목표:** 정량적 분석 및 시각화 결과를 바탕으로 Sim2Real Gap의 근본 원인을 식별합니다.
+*   **분석 방법:**
+    *   **Kinematic Mismatch (기구학적 불일치):** 궤적의 시작점과 끝점에서 일정한 오차(Offset)가 관찰될 경우, 로봇의 URDF 모델(관절 길이, TCP 오프셋)이 실제 로봇과 일치하지 않을 가능성이 높습니다. (예: `ur5e_tcp_offset.xacro` 파일의 오프셋 값 검증)
+    *   **Dynamic Mismatch (동역학적 불일치):** 궤적의 가속/감속 구간에서 오차가 두드러지고, 속도가 0인 정지 상태에서는 오차가 줄어들 경우, 시뮬레이터의 물리 엔진 파라미터(마찰 계수, 관성)가 실제 로봇과 다를 가능성이 높습니다.
+    *   **Controller Mismatch (제어기 불일치):** 시뮬레이션과 실제 로봇의 궤적 추종 속도나 안정성이 다를 경우, 저수준 제어기(PID 게인) 설정이 다르거나 시뮬레이터의 컨트롤러가 실제 컨트롤러의 안전 기능을 모방하지 못했을 가능성이 높습니다.
+    *   **Latency Mismatch (통신 지연 불일치):** 시뮬레이션 환경의 통신 지연(Latency)이 실제 환경보다 현저히 낮거나 높을 경우, 실시간 제어 성능에 영향을 미칩니다.
+
+**단계 5: 반복 개선 및 MLOps 연동**
+
+*   **목표:** 분석 결과를 바탕으로 시뮬레이션 모델을 개선하고, MLOps 파이프라인에 통합하여 지속적으로 모니터링합니다.
+*   **절차:**
+    1.  **시뮬레이터 모델 튜닝:** RCA 결과를 바탕으로 URDF 파일, 물리 엔진 파라미터(Gazebo/Isaac Sim)를 수정합니다. (예: Joint 1의 마찰 계수 조정)
+    2.  **Planning Agent 튜닝:** Sim2Real Gap이 발생하는 구간에 대해 Planning Agent가 더 보수적인 궤적을 생성하도록 제약 조건을 추가합니다.
+    3.  **MLOps 모니터링:** Sim2Real Gap 메트릭(`RMSE_{sim2real}`)을 MLOps 플랫폼(MLflow/Grafana)에 기록하여, 시뮬레이터 모델 변경 시 성능 변화를 자동으로 추적합니다.
+
+**2.2. 오차 분석 보고서 템플릿**

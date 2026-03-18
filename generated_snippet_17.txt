@@ -1,0 +1,4 @@
+
+### 3.2. Streamlit 기반 명령어 입력 UI
+
+Streamlit을 사용하여 `URRTDEClient`를 제어하는 사용자 인터페이스를 구축합니다. 이 UI는 로봇 연결 상태 표시, 실시간 관절값 모니터링, 그리고 `moveJ`, `speedJ` 명령 입력 기능을 제공합니다.

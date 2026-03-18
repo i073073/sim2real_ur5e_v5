@@ -1,0 +1,40 @@
+graph TD
+    subgraph Simulation Environment
+        direction TB
+        subgraph Sim Sensors
+            S1[Simulated Camera]
+            S2[Simulated Joint States]
+        end
+        S1 --> PA(Perception Agent);
+        S2 --> PA;
+        EA(Execution Agent) --> SimH[Simulated Hardware Interface];
+        SimH --> Gazebo[Gazebo/Isaac Sim];
+    end
+
+    subgraph Real Environment
+        direction TB
+        subgraph Real Sensors
+            R1[Real Camera]
+            R2[Real UR5e Joint States]
+        end
+        R1 --> PA;
+        R2 --> PA;
+        EA --> RealH[Real Hardware Interface];
+        RealH --> UR5e[UR5e Robot Controller];
+    end
+
+    subgraph Core Agents (Sim2Real Agnostic)
+        direction LR
+        PA --> P[Planning Agent];
+        P --> EA;
+        P --> MA(Monitoring Agent);
+        EA --> MA;
+        MA --> P; % Replanning feedback loop
+    end
+
+    style SimH fill:#f9f,stroke:#333,stroke-width:2px
+    style RealH fill:#f9f,stroke:#333,stroke-width:2px
+    style PA fill:#bcf,stroke:#333,stroke-width:2px
+    style P fill:#ccf,stroke:#333,stroke-width:2px
+    style EA fill:#bcf,stroke:#333,stroke-width:2px
+    style MA fill:#bcf,stroke:#333,stroke-width:2px

@@ -1,0 +1,36 @@
+# ur5e_sim2real/rviz/ur5e_config.rviz
+# Rviz configuration file for UR5e Sim2Real visualization
+
+Panels:
+  - Class: rviz_default_plugins/Displays
+    Name: Displays
+    ...
+  - Class: rviz_default_plugins/TF
+    Name: TF
+    ...
+Displays:
+  - Class: rviz_default_plugins/Grid
+    Name: Grid
+    ...
+  - Class: rviz_default_plugins/RobotModel
+    Name: RobotModel
+    ...
+  - Class: rviz_default_plugins/TF
+    Name: TF
+    ...
+    # Show all TFs, specifically tcp_link and wrist_3_link
+    Show All Frames: true
+    Show Arrows: true
+    Show Names: true
+    Show Axes: true
+    Frames:
+      - wrist_3_link:
+          Show Axes: true
+          Show Name: true
+      - tcp_link:
+          Show Axes: true
+          Show Name: true
+  - Class: rviz_default_plugins/MarkerArray
+    Name: TCP Trail
+    Topic: /tcp_trail_markers
+    # Set color and size properties here (or let the publisher define them)

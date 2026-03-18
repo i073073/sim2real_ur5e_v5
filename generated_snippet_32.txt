@@ -1,0 +1,12 @@
+
+## 3. 모방 모델 학습 (Imitation Model Training)
+
+### 3.1. 모델 아키텍처
+
+로봇의 관절 위치 예측은 연속적인 값을 예측하는 회귀(Regression) 문제입니다. 이를 위해 간단한 다층 퍼셉트론(Multi-Layer Perceptron, MLP) 모델을 사용합니다.
+
+*   **입력 계층 (Input Layer):** 6개 관절 위치
+*   **은닉 계층 (Hidden Layers):** 64개 뉴런, 32개 뉴런 (활성화 함수: ReLU)
+*   **출력 계층 (Output Layer):** 6개 관절 위치 (활성화 함수: Linear)
+
+### 3.2. 학습 코드

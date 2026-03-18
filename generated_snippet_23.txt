@@ -1,0 +1,8 @@
+
+## 3. MLOps 플랫폼 연동 보고서: DVC 및 MLflow 통합
+
+### 3.1. DVC (Data Version Control) 연동
+
+MLOps 파이프라인에서 데이터셋의 버전 관리는 필수적입니다. DVC를 사용하여 `data/processed` 디렉토리를 버전 관리하고, 데이터셋의 변경 이력을 추적합니다.
+
+**DVC 초기화 및 데이터셋 추가:**

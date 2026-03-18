@@ -1,0 +1,4 @@
+
+**2.3. RL 정책 학습 (PPO with Imitation Pre-training)**
+
+모방 모델(Imitation Model)을 초기 정책으로 사용하여 PPO(Proximal Policy Optimization) 학습을 시작합니다. 이는 학습 초기 단계에서 무작위 탐색으로 인한 비효율성을 줄이고, 안전한 초기 동작을 보장합니다.

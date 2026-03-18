@@ -1,0 +1,4 @@
+
+### 3.3. 실행 환경 설정 (requirements.txt)
+
+Streamlit 애플리케이션 및 RTDE 통신에 필요한 Python 라이브러리 목록입니다.

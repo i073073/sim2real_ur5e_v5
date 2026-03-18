@@ -1,0 +1,17 @@
+# Dockerfile
+# Base image for ROS2 Humble on Ubuntu 22.04
+FROM ros:humble-ros-core
+
+# Install necessary packages for UR5e and MoveIt! 2
+RUN apt-get update && apt-get install -y \
+    ros-humble-ur-robot-driver \
+    ros-humble-moveit \
+    python3-pip \
+    python3-pydantic
+
+# Install Python dependencies for agents
+COPY requirements.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
+
+# Set entrypoint for ROS2 launch file
+CMD ["ros2", "launch", "ur5e_sim2real", "main_launch.py"]

@@ -1,0 +1,19 @@
+# config/settings.yaml
+# Sim2Real configuration file
+
+# Environment mode: 'simulation' or 'real'
+environment_mode: "real"
+
+# Robot configuration (specific to UR5e)
+robot_ip: "192.168.1.102" # Real robot IP address
+robot_port: 50001 # RTDE port
+
+# Sensor configuration
+camera:
+  enabled: true
+  topic_name: "/camera/color/image_raw"
+
+# Planning configuration
+planning:
+  collision_checking_enabled: true
+  planning_timeout_sec: 5.0

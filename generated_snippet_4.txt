@@ -1,0 +1,22 @@
+graph TD
+    subgraph Input
+        A[Sensor Data] --> B(Perception Agent);
+    end
+
+    subgraph Core System
+        B --> C(Planning Agent);
+        C --> D(Execution Agent);
+        D --> E(Monitoring Agent);
+        E --> C; % Feedback loop for replanning
+    end
+
+    subgraph Output
+        D --> F[Robot Hardware Commands];
+    end
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#f9f,stroke:#333,stroke-width:2px
+    style C fill:#ccf,stroke:#333,stroke-width:2px
+    style B fill:#bcf,stroke:#333,stroke-width:2px
+    style D fill:#bcf,stroke:#333,stroke-width:2px
+    style E fill:#bcf,stroke:#333,stroke-width:2px

@@ -1,0 +1,4 @@
+
+## 4. 상세 메트릭 리포트 시각화 도구 (Matplotlib)
+
+Streamlit 대시보드에서 사용된 상세 메트릭을 Matplotlib을 사용하여 추가 시각화합니다.

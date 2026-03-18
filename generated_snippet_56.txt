@@ -1,0 +1,11 @@
+
+### 3.2. 제안 2: Offline RL 기반 Planning Agent 학습
+
+**문제점:** 현재 PPO 기반 RL 학습은 시뮬레이션 환경에서 많은 상호작용(Interaction)을 필요로 합니다. 실제 환경에서는 데이터 수집 비용이 높고, 안전 문제로 인해 무작위 탐색(Exploration)이 어렵습니다.
+
+**제안 알고리즘:** Offline RL (예: Conservative Q-Learning, CQL).
+
+*   **개념:** [MLOps Data Pipeline Implementation]을 통해 수집된 실제 로봇 데이터셋(Offline Dataset)을 활용하여, 에이전트가 환경과 상호작용 없이 정책을 학습합니다. CQL은 데이터셋에 없는 행동을 선택할 경우 페널티를 부여하여, 학습된 정책이 데이터셋의 행동 분포를 벗어나지 않도록 보장합니다.
+*   **통합 방안:** Planning Agent의 학습 모드를 "Online PPO"에서 "Offline CQL"로 전환합니다. Execution Agent가 실제 로봇에서 수집한 데이터(`ur5e_joint_log.csv`)를 MLOps 파이프라인을 통해 Planning Agent에게 전달하면, Planning Agent는 이 데이터를 기반으로 Offline RL 학습을 수행합니다.
+
+**예시 코드: Offline RL 학습 환경 구성 (Mockup)**
