@@ -1,6 +1,19 @@
+graph TD
+    A[URSim / Real Robot] -->|RTDE 10Hz| B(DataLogger Service);
+    B -->|Generates| C[Raw Data (*.jsonl)];
+    C -->|Git Commit & Push| D(GitHub Repository);
+    D -- Trigger --> E(GitHub Actions CI);
+    subgraph "CI/CD Pipeline for Data"
+        E --> F{Run Data Validation};
+        F -- Success --> G[Version Data with DVC];
+        G --> H[Push to DVC Remote (S3)];
+        F -- Failure --> I[Create Issue & Notify];
+    end
+    
+    subgraph "ML Experiment"
+        J(ML Training Script) -->|dvc pull| K(Versioned Dataset);
+        J -->|Log to| L(MLflow Tracking Server);
+        K --> J;
+    end
 
-## 3. 모방 학습 모델 정의 및 학습
-
-모방 학습 모델은 PyTorch를 사용하여 구현합니다. 로봇의 관절 위치를 입력으로 받아 다음 관절 위치를 예측하는 다층 퍼셉트론(MLP)을 사용합니다.
-
-### 3.1. 모방 학습 모델 아키텍처 (`src/imitation_model.py`)
+    H -.-> K;

@@ -1,40 +1,39 @@
 graph TD
-    subgraph Simulation Environment
-        direction TB
-        subgraph Sim Sensors
-            S1[Simulated Camera]
-            S2[Simulated Joint States]
-        end
-        S1 --> PA(Perception Agent);
-        S2 --> PA;
-        EA(Execution Agent) --> SimH[Simulated Hardware Interface];
-        SimH --> Gazebo[Gazebo/Isaac Sim];
+    subgraph "Layer 4: Mission Control & Interface"
+        A[User Interface (React)] -->|HTTP/WebSocket| B(Mission Control API <br> FastAPI)
+        B -->|Write| C{PostgreSQL <br> (Missions, Logs)}
+        B -->|Publish| D[Message Queue <br> (RabbitMQ)]
+        B -->|Read| E{Time-Series DB <br> (InfluxDB)}
     end
 
-    subgraph Real Environment
-        direction TB
-        subgraph Real Sensors
-            R1[Real Camera]
-            R2[Real UR5e Joint States]
-        end
-        R1 --> PA;
-        R2 --> PA;
-        EA --> RealH[Real Hardware Interface];
-        RealH --> UR5e[UR5e Robot Controller];
+    subgraph "Layer 3: Orchestration & Collaboration"
+        F(CrewAI Orchestrator)
     end
 
-    subgraph Core Agents (Sim2Real Agnostic)
-        direction LR
-        PA --> P[Planning Agent];
-        P --> EA;
-        P --> MA(Monitoring Agent);
-        EA --> MA;
-        MA --> P; % Replanning feedback loop
+    subgraph "Layer 2: Core Agent Layer"
+        G(Perception Service <br> YOLOv8, PyTorch)
+        H(Planning Service <br> MoveIt, Custom Python)
+        I(Execution Service <br> Python)
+        J(Diagnostics Service <br> Python)
     end
 
-    style SimH fill:#f9f,stroke:#333,stroke-width:2px
-    style RealH fill:#f9f,stroke:#333,stroke-width:2px
-    style PA fill:#bcf,stroke:#333,stroke-width:2px
-    style P fill:#ccf,stroke:#333,stroke-width:2px
-    style EA fill:#bcf,stroke:#333,stroke-width:2px
-    style MA fill:#bcf,stroke:#333,stroke-width:2px
+    subgraph "Layer 1: Physical Abstraction Layer (PAL)"
+        K(ROS 2 Bridge <br> ros2_control, rtde_control)
+        L(UR5e Robot / Gazebo Sim)
+    end
+
+    %% Data Flow
+    B -- "Run Mission (Task JSON)" --> D
+    D -- "New Task" --> F
+    F -- "Invoke Tool (gRPC)" --> G
+    F -- "Invoke Tool (gRPC)" --> H
+    F -- "Invoke Tool (gRPC)" --> I
+    G -- "Perception Result" --> F
+    H -- "Plan Result" --> F
+    I -- "Execute Command (ROS 2 Topic/Action)" --> K
+    J -- "System Health (Metrics)" --> E
+    K -- "Robot State (ROS 2 Topic)" --> J
+    K -- "RTDE/Driver" <--> L
+
+    classDef layer fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    class Layer4,Layer3,Layer2,Layer1 layer;

@@ -1,4 +1,6 @@
 crewai
 langchain
+matplotlib
 numpy
+pandas
 streamlit

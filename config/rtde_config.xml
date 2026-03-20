@@ -1,0 +1,22 @@
+# config/rtde_config.xml
+<rtde_config>
+    <recipe key="state">
+        <!-- 로봇 -> PC (Input) -->
+        <field name="timestamp" type="DOUBLE"/>
+        <field name="actual_q" type="VECTOR6D"/>
+        <field name="actual_qd" type="VECTOR6D"/>
+        <field name="actual_TCP_pose" type="VECTOR6D"/>
+        <field name="actual_TCP_speed" type="VECTOR6D"/>
+        <field name="robot_status_bits" type="UINT32"/>
+        <field name="safety_status_bits" type="UINT32"/>
+        <field name="actual_digital_input_bits" type="UINT64"/>
+        <field name="actual_digital_output_bits" type="UINT64"/>
+    </recipe>
+    <recipe key="control">
+        <!-- PC -> 로봇 (Output) -->
+        <field name="input_bit_register_64" type="UINT64"/>
+        <field name="input_int_register_0" type="INT32"/>
+        <field name="speed_slider_mask" type="UINT32"/>
+        <field name="speed_slider_fraction" type="DOUBLE"/>
+    </recipe>
+</rtde_config>

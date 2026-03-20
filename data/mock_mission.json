@@ -1,0 +1,22 @@
+# data/mock_mission.json
+{
+  "mission_id": "mission-20240521-001",
+  "mission_name": "Pick Red Cube and Place on Green Zone",
+  "tasks": [
+    {
+      "task_id": "task-001",
+      "task_type": "FindObject",
+      "object_name": "red_cube"
+    },
+    {
+      "task_id": "task-002",
+      "task_type": "MoveToPose",
+      "target_pose": {
+        "position": { "x": 0.5, "y": -0.2, "z": 0.3 },
+        "orientation": { "x": 0.0, "y": 0.707, "z": 0.0, "w": 0.707 }
+      },
+      "speed": 0.5,
+      "acceleration": 0.3
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+# config/diffusion_policy_config.yaml
+# Configuration for Diffusion Policy Training
+model:
+  observation_dim: 262 # Example: 256 (ResNet embedding) + 6 (joint angles)
+  action_dim: 6
+  time_embedding_dim: 32
+
+diffusion:
+  num_diffusion_iters: 100
+  noise_scheduler: "cosine" # or "linear"
+
+training:
+  num_epochs: 500
+  batch_size: 64
+  learning_rate: 1e-4
+  dataset_path: "data/demonstrations/peg_in_hole.pkl"

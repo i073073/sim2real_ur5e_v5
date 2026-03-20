@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant User
+    participant MissionControlAPI
+    participant RabbitMQ
+    participant CrewAI_Orchestrator
+    participant PerceptionService
+    participant PlanningService
+    participant ExecutionService
+    participant PAL_ROS_Bridge
+    participant UR5e_Robot
+
+    User->>+MissionControlAPI: POST /missions (Pick & Place Mission)
+    MissionControlAPI->>RabbitMQ: Publish(mission_task)
+    MissionControlAPI-->>-User: 202 Accepted (mission_id)
+
+    RabbitMQ->>+CrewAI_Orchestrator: Consume(mission_task)
+    CrewAI_Orchestrator->>CrewAI_Orchestrator: Create Crew (Vision, Planner, Executor Agents)
+    CrewAI_Orchestrator->>CrewAI_Orchestrator: Start Task 1: Find 'red_cube'
+
+    Note over CrewAI_Orchestrator, PerceptionService: Vision Agent uses its tool
+    CrewAI_Orchestrator->>+PerceptionService: gRPC: DetectObject('red_cube')
+    PerceptionService-->>-CrewAI_Orchestrator: Return {pose: [x,y,z,...]}
+
+    CrewAI_Orchestrator->>CrewAI_Orchestrator: Start Task 2: Plan approach to cube
+    Note over CrewAI_Orchestrator, PlanningService: Planner Agent uses its tool
+    CrewAI_Orchestrator->>+PlanningService: gRPC: PlanMotion(target_pose)
+    PlanningService-->>-CrewAI_Orchestrator: Return {trajectory_plan}
+
+    CrewAI_Orchestrator->>CrewAI_Orchestrator: Start Task 3: Execute approach
+    Note over CrewAI_Orchestrator, ExecutionService: Executor Agent uses its tool
+    CrewAI_Orchestrator->>+ExecutionService: gRPC: ExecutePlan(trajectory_plan)
+    ExecutionService->>+PAL_ROS_Bridge: ROS Action: /joint_trajectory_controller/follow_joint_trajectory
+    PAL_ROS_Bridge->>+UR5e_Robot: RTDE/Script Commands
+    UR5e_Robot-->>-PAL_ROS_Bridge: Robot State
+    PAL_ROS_Bridge-->>-ExecutionService: Action Result: Success
+    ExecutionService-->>-CrewAI_Orchestrator: Return {status: 'Completed'}
+
+    Note over CrewAI_Orchestrator: ... (Gripper close, lift, move to green zone, release) ...
+
+    CrewAI_Orchestrator->>RabbitMQ: Publish(mission_result)
+    deactivate CrewAI_Orchestrator
+
+    Note over MissionControlAPI: Update mission status via WebSocket

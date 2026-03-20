@@ -1,4 +1,43 @@
+    UR5e_Sim2Real/
+    ├── app/
+    │   └── main_ui.py
+    ├── config/
+    │   └── rtde_recipes.py
+    ├── src/
+    │   ├── ur_rtde_client.py
+    │   └── data_logger.py
+    └── requirements.txt
+    ```
 
-## 3. RTDE 클라이언트 및 JSON 저장 파이프라인 구현
+2.  **URSim 실행:**
+    Universal Robots의 URSim 시뮬레이터를 실행하고, 로봇이 정상적으로 부팅되었는지 확인합니다.
 
-기존 `rtde_client.py`를 수정하여 `DataQualityManager`를 통합하고, 수집된 데이터를 JSON 형식으로 저장합니다.
+3.  **가상환경 및 의존성 설치:**
+    터미널에서 프로젝트의 루트 디렉토리(`UR5e_Sim2Real/`)로 이동한 후, 다음 명령어를 실행합니다.
+
+    ```bash
+    # 가상환경 생성 및 활성화
+    python -m venv venv
+    source venv/bin/activate  # Windows: venv\Scripts\activate
+
+    # 의존성 라이브러리 설치
+    pip install -r requirements.txt
+    ```
+
+4.  **Streamlit UI 실행:**
+    다음 명령어를 실행하여 웹 애플리케이션을 시작합니다.
+
+    ```bash
+    streamlit run app/main_ui.py
+    ```
+
+5.  **사용:**
+    웹 브라우저에 자동으로 UI 페이지가 열립니다. 사이드바의 "Connect" 버튼을 눌러 URSim에 연결한 후, 각 탭의 기능을 사용하여 로봇을 제어하고 데이터를 로깅할 수 있습니다. 로깅된 CSV 파일은 프로젝트 루트에 `logs/` 디렉토리가 생성되고 그 안에 저장됩니다.
+
+--- TASK 5 RAW OUTPUT ---
+
+네, QA 엔지니어로서 UR5e 명령어 라이브러리 및 RTDE 통신 기능 검증을 위한 테스트 스크립트와 결과 보고서를 작성하겠습니다. 테스트는 `pytest` 프레임워크를 사용하여 자동화된 방식으로 수행하며, URSim 시뮬레이터를 대상으로 기능의 정확성과 안정성을 검증합니다.
+
+### **1. 명령어 라이브러리 및 통신 기능 테스트 스크립트**
+
+본 스크립트는 `pytest`를 사용하여 `UR_RTDE_Client` 클래스의 핵심 기능을 체계적으로 검증합니다. 테스트를 실행하기 전, URSim 시뮬레이터가 `127.0.0.1`에서 실행 중이어야 합니다.

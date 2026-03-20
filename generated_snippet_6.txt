@@ -1,36 +1,33 @@
-graph TD
-    subgraph High-Level Planning Layer (CrewAI)
-        A[User Goal Input] --> B(Task Planning Agent);
-        B --> C{Task Decomposition};
-        C --> D(Path Planning Agent);
-        D --> E[Trajectory Plan (Pydantic Model)];
-    end
-
-    subgraph Low-Level Execution Layer (ROS2/RTDE)
-        E --> F(Motor Control Agent);
-        F --> G{Sim/Real Interface};
-        G --> H1(Simulation Environment: Gazebo);
-        G --> H2(Real Robot: UR5e via RTDE);
-        H1 --> I1(Sim Feedback);
-        H2 --> I2(Real Feedback);
-        I1 --> J(State Estimation Agent);
-        I2 --> J;
-    end
-
-    subgraph Feedback Loop & Learning Layer
-        J --> K(Safety Monitoring Agent);
-        J --> L(Decision Making Agent);
-        K --> M{Safety Check};
-        M -- OK --> L;
-        M -- Collision/Error --> N(Emergency Stop);
-        L -- Plan OK --> O(Experience Replay Agent);
-        L -- Plan Failed --> B;
-        O --> P(Policy Update Agent);
-        P --> B;
-    end
-
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style E fill:#ccf,stroke:#333,stroke-width:2px
-    style H1 fill:#fcc,stroke:#333,stroke-width:2px
-    style H2 fill:#fcc,stroke:#333,stroke-width:2px
-    style N fill:#f00,stroke:#333,stroke-width:2px
+# UR5e_Sim2Real/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                # CI/CD 파이프라인 정의
+├── config/
+│   └── rtde_config.xml           # RTDE 통신 데이터 필드 정의
+├── data/
+│   └── mock_mission.json         # 테스트용 미션 데이터
+├── docker/
+│   ├── Dockerfile.api
+│   ├── Dockerfile.orchestrator
+│   └── Dockerfile.ros
+├── docker-compose.yml            # 로컬 개발 환경 구성
+├── src/
+│   ├── api/                      # Mission Control API 소스코드
+│   │   ├── main.py
+│   │   └── routers/
+│   ├── orchestrator/             # CrewAI Orchestrator 소스코드
+│   │   ├── main.py
+│   │   └── agents/
+│   │       └── robot_agents.py
+│   ├── services/                 # 핵심 에이전트 서비스 (Perception, Planning 등)
+│   │   ├── perception/
+│   │   └── planning/
+│   ├── common/                   # 공통 모듈 (Pydantic 모델, gRPC proto 등)
+│   │   ├── models.py
+│   │   └── protos/
+│   └── ros_ws/                   # ROS 2 워크스페이스
+│       └── src/
+│           └── ur5e_bridge/
+├── scripts/
+│   └── run_mission.py            # 미션 실행 테스트 스크립트
+└── tests/                        # 단위/통합 테스트 코드

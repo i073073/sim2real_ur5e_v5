@@ -2,13 +2,8 @@
 import os, sys, time
 from crewai import Agent, Task, Crew, Process
 from langchain_google_genai import ChatGoogleGenerativeAI
-
-# API 키는 subprocess.Popen의 env를 통해 전달받습니다.
 worker_api_key = os.environ.get("GOOGLE_API_KEY")
-
-# 결과의 일관성을 위해 temperature를 0.1로 낮춤
-llm = ChatGoogleGenerativeAI(model="gemini-robotics-er-1.5-preview", google_api_key=worker_api_key, verbose=True, temperature=0.1, max_retries=3)
-
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", google_api_key=worker_api_key, verbose=True, temperature=0.1, max_retries=15)
 agent_1 = Agent(role='''AI Orchestrator''', goal='''전체 AI 에이전트 시스템의 전략적 방향 설정, 고수준 아키텍처 및 핵심 기술 의사결정 총괄, 프로젝트 비전 유지 및 에이전트 간 고수준 협업 조율.''', backstory='''AI 기반 로봇 제어 시스템 개발의 최고 책임자로서, 기술적 비전과 사업적 목표를 통합하여 팀을 이끌고 있습니다. 각 에이전트의 역량을 최대한 발휘하도록 전략적 지휘를 담당하며, 시스템의 장기적인 성공을 위한 로드맵을 제시합니다.''', verbose=True, allow_delegation=False, llm=llm)
 agent_2 = Agent(role='''Project Coordinator''', goal='''프로젝트의 일상적인 진행 상황 관리, 일정 및 자원 배분 지원, 에이전트 간의 실무 협업 촉진, 위험 요소 식별 및 보고, 모든 산출물 및 자료 체계적 관리 및 보관.''', backstory='''프로젝트의 원활한 운영을 담당하는 실무 관리자입니다. 에이전트들이 목표에 집중할 수 있도록 행정적, 운영적 지원을 제공하며, 팀의 생산성을 극대화하고 모든 협업 기록과 산출물을 체계적으로 정리합니다.''', verbose=True, allow_delegation=False, llm=llm)
 agent_3 = Agent(role='''Technical Architect''', goal='''프로젝트의 전체 기술 아키텍처 설계 및 구현 표준화, 핵심 기술 스택 선정, 시스템 통합 및 확장성 확보, 도구 및 인프라 관리, API 인터페이스 정의.''', backstory='''기술적 난제를 해결하고 견고한 시스템 기반을 구축하는 데 전문성을 가진 아키텍트입니다. 각 기술 구성 요소가 조화롭게 작동하도록 설계하고 가이드하며, 안정적인 개발 환경을 제공합니다.''', verbose=True, allow_delegation=False, llm=llm)
@@ -39,7 +34,6 @@ task_16 = Task(description='''로봇 제어 및 Sim2Real 전환 과정에서의 
 task_17 = Task(description='''프로젝트 전반의 전략적 진행 상황 모니터링, 고수준 위험 관리 및 비전 유지. (중요: 설정값이나 데이터, 소스코드는 반드시 첫 줄에 생성할 파일경로(예: `# config/settings.yaml`, `# src/main.py`, `# data/mock.json`) 주석이 포함된 마크다운 코드 블록으로 작성하세요.)''', expected_output='''주간/월간 프로젝트 현황 보고서, 전략적 의사결정 기록.''', agent=agent_1)
 task_18 = Task(description='''일상적인 프로젝트 진행 상황 모니터링, 에이전트 간 실무 업무 조율 및 자원 지원, 모든 자료의 체계적 보관 및 협업 기록 관리. (중요: 설정값이나 데이터, 소스코드는 반드시 첫 줄에 생성할 파일경로(예: `# config/settings.yaml`, `# src/main.py`, `# data/mock.json`) 주석이 포함된 마크다운 코드 블록으로 작성하세요.)''', expected_output='''일일/주간 업무 진행 현황 보고, 협업 기록 및 산출물 관리 시스템.''', agent=agent_2)
 task_19 = Task(description='''최신 AI/ML 기술 동향 분석, Sim2Real 프로젝트에 적용 가능한 새로운 알고리즘 및 연구 결과 탐색 및 제안. (중요: 설정값이나 데이터, 소스코드는 반드시 첫 줄에 생성할 파일경로(예: `# config/settings.yaml`, `# src/main.py`, `# data/mock.json`) 주석이 포함된 마크다운 코드 블록으로 작성하세요.)''', expected_output='''기술 동향 분석 보고서, 신규 알고리즘 적용 가능성 제안서.''', agent=agent_10)
-
 
 print("🚀 크루 결성 완료. 실행 시작...")
 print("⚠️ API 할당량 보호를 위해 30초 후 작업을 시작합니다...")

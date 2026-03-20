@@ -1,0 +1,53 @@
+# docker-compose.yml
+version: '3.8'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rabbitmq
+      - postgres
+    volumes:
+      - ./src:/app/src
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.orchestrator
+    depends_on:
+      - rabbitmq
+      - perception_service
+    volumes:
+      - ./src:/app/src
+
+  perception_service:
+    # GPU 사용을 위한 설정 포함
+    ...
+
+  ros-master:
+    image: ros:noetic-ros-core
+    command: stdbuf -o L roscore
+
+  gazebo:
+    image: osrf/gazebo11
+    depends_on:
+      - ros-master
+    # GUI 포워딩 및 ROS 연동 설정 포함
+    ...
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
