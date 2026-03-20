@@ -1,20 +1,63 @@
-        # DVC에 새로운 데이터 파일 추가
-        dvc add data/raw/joint_log_20240523_103000.jsonl
+import time
+import numpy as np
+from src.hardware.ur_command_library import UR5eCommandLibrary
+from src.utils.data_logger import JointDataLogger
 
-        # Git에 메타데이터 파일(.dvc) 커밋
-        git add data/raw/joint_log_20240523_103000.jsonl.dvc .gitignore
-        git commit -m "feat: add new joint data from pick-and-place task"
-        ```
-    3.  DVC 원격 저장소(예: AWS S3, Google Cloud Storage)에 실제 데이터 파일을 업로드합니다.
-        ```bash
-        # DVC 원격 저장소로 데이터 푸시
-        dvc push
-        ```
-- **기대 효과:**
-    - **재현성:** 특정 Git 커밋 해시만 있으면 누구나 동일한 버전의 데이터셋을 정확히 재구성할 수 있습니다.
-    - **효율성:** Git 저장소는 가볍게 유지되며, 데이터는 별도의 스토리지에서 효율적으로 관리됩니다.
+def test_rtde_connection_and_latency(robot_ip="127.0.0.1"):
+    """RTDE 연결 안정성 및 통신 지연 시간 측정"""
+    print(f"\n[Test] Connecting to URSim at {robot_ip}...")
+    client = UR5eCommandLibrary(robot_ip)
+    
+    if not client.is_connected:
+        print("Result: FAILED - Could not connect to robot.")
+        return False
 
-#### 3.2. 데이터 품질 자동화: GitHub Actions
+    latencies = []
+    for _ in range(100):
+        start = time.perf_counter()
+        _ = client.get_actual_q()
+        latencies.append(time.perf_counter() - start)
+    
+    avg_latency = np.mean(latencies) * 1000 # ms
+    max_latency = np.max(latencies) * 1000 # ms
+    
+    print(f"Result: PASSED")
+    print(f"Average Latency: {avg_latency:.2f} ms")
+    print(f"Max Latency: {max_latency:.2f} ms")
+    
+    client.disconnect()
+    return avg_latency < 2.0 # RTDE 500Hz 기준 2ms 이내 권장
 
-- **목적:** 새로운 데이터가 Git에 커밋될 때마다 데이터 유효성 검사를 자동으로 수행하여, 품질이 낮은 데이터가 메인 브랜치에 병합되는 것을 방지합니다.
-- **워크플로우 예시 (`.github/workflows/data_validation.yml`):**
+def test_logging_frequency_consistency():
+    """10Hz 데이터 로깅 주기가 정확한지 검증"""
+    from src.hardware.ur_command_library import UR5eCommandLibrary
+    client = UR5eCommandLibrary("127.0.0.1")
+    logger = JointDataLogger(client, frequency_hz=10, log_dir="tests/logs")
+    
+    print("\n[Test] Verifying 10Hz Logging Consistency...")
+    logger.start()
+    time.sleep(2.0) # 2초간 데이터 수집 (약 20개 샘플 기대)
+    logger.stop()
+    
+    # 로그 파일 확인
+    import glob
+    import pandas as pd
+    list_of_files = glob.glob('tests/logs/*.csv')
+    latest_file = max(list_of_files, key=lambda x: x)
+    df = pd.read_csv(latest_file)
+    
+    # 시간 간격 계산
+    intervals = df['timestamp'].diff().dropna()
+    avg_interval = intervals.mean()
+    jitter = intervals.std()
+    
+    print(f"Sample Count: {len(df)}")
+    print(f"Average Interval: {avg_interval:.4f}s (Target: 0.1000s)")
+    print(f"Jitter (Std Dev): {jitter:.6f}s")
+    
+    assert 0.09 <= avg_interval <= 0.11
+    client.disconnect()
+
+if __name__ == "__main__":
+    test_rtde_connection_and_latency()
+    test_logging_frequency_consistency()

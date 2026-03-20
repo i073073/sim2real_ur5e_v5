@@ -1,4 +1,23 @@
+# URSim 데이터 파이프라인 및 MLOps 연동 보고서
 
-### 2.2. 프로그램 파서 구현 (`src/program_parser.py`)
+## 1. 데이터 파이프라인 아키텍처
+- **Ingestion**: `UR5eCommandLibrary`를 통해 URSim으로부터 10Hz 주기로 관절값 수집.
+- **Validation Layer**: Pydantic 기반 스키마 검증 및 `DataQualityController`를 통한 물리적 이상치(Jump, Over-speed) 필터링.
+- **Storage**: 검증된 데이터를 세션별 고유 ID를 가진 JSON 파일로 로컬/객체 저장소에 영구 저장.
+- **Tracking**: MLflow를 사용하여 데이터셋의 버전, 수집 경로, 품질 지표(정상 데이터 비율)를 중앙 관리.
 
-URScript와 유사한 형식의 텍스트 파일을 파싱하여 `Waypoint` Pydantic 모델 목록을 생성합니다.
+## 2. 데이터 품질 관리(QC) 결과
+- **검증 항목**:
+    - Joint Limit Violation: 관절 가동 범위 초과 여부.
+    - Continuity Check: 이전 프레임 대비 비정상적인 변위 발생 여부.
+    - Schema Integrity: 데이터 누락 및 타입 일치 여부.
+- **품질 지표**: `data_quality_score`를 도입하여 95% 미만일 경우 데이터셋 재수집 알림 자동화 가능.
+
+## 3. MLOps 플랫폼(MLflow) 활용 방안
+- **데이터 버전 관리**: 각 JSON 파일은 MLflow Run ID와 매핑되어 특정 모델 학습에 사용된 데이터셋의 기원을 추적(Data Lineage).
+- **모니터링**: 수집 세션별 `invalid_points_count`를 모니터링하여 시뮬레이터(URSim)의 통신 불안정이나 설정 오류를 조기에 감지.
+- **자동화 확장**: 수집 완료 시 MLflow Model Registry와 연동하여 자동으로 재학습 파이프라인(Retraining Pipeline) 트리거 가능.
+
+## 4. 향후 개선 사항
+- **DVC 연동**: 대용량 바이너리 데이터 처리를 위해 DVC(Data Version Control)를 도입하여 S3/GCS 저장소와 동기화.
+- **Feature Store**: 수집된 관절값을 가공(정규화, 델타값 계산)하여 Feature Store에 등록, 다수의 에이전트가 공유하도록 확장.

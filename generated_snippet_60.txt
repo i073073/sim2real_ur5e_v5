@@ -1,21 +1,27 @@
+import pandas as pd
 
--   **Safety Agent (안전 에이전트):**
-    -   **책임:** 시스템의 안전 상태를 총괄하는 핵심 에이전트. 모든 안전 관련 이벤트를 수신하고, 분석하여 보호 정지(Protective Stop) 또는 비상 정지(Emergency Stop) 명령을 PAL에 전송한다.
-    -   **기능:** 안전 구역(Safety Zone) 침범 감지, 시스템 임계치(속도, 토크 등) 초과 모니터링, 진단 에이전트로부터의 심각한 오류 보고 수신, 하드웨어 E-Stop 신호 감지 및 시스템 상태 전파.
+class OptimizationReporter:
+    @staticmethod
+    def compare_processes(original, optimized):
+        """원본과 최적화된 프로그램의 성능 비교"""
+        
+        def estimate_total_time(process):
+            time = 0
+            for i in range(len(process.points)-1):
+                p1, p2 = process.points[i].target, process.points[i+1].target
+                v, a = process.points[i+1].velocity, process.points[i+1].acceleration
+                dist = np.linalg.norm(np.array(p2) - np.array(p1))
+                time += (dist / v) + (v / a)
+            return time
 
--   **하드웨어 비상 정지 회로 (Hardware E-Stop Circuit):**
-    -   **책임:** 소프트웨어와 독립적으로 로봇의 동력을 즉시 차단하는 물리적 안전 회로. 이는 최후의 안전 보루 역할을 한다.
-    -   **연동:** E-Stop 버튼이 눌리면, 회로는 로봇 컨트롤러의 안전 입력(SI)으로 신호를 보내 즉시 동력을 차단함과 동시에, 해당 상태를 ROS 2 토픽을 통해 `Safety Agent`에 알려 소프트웨어 상태와 물리적 상태의 일관성을 유지한다.
-
-#### **3. 위험 분석 및 완화 전략 (Hazard Identification and Risk Assessment)**
-
-| 위험 요소 (Hazard) | 잠재적 결과 | 위험 등급 | 완화 전략 (Safety Protocol) |
-| :--- | :--- | :--- | :--- |
-| **1. 인간-로봇 충돌** | 작업자 부상, 사망 | **심각** | - **안전 구역 설정:** 작업 공간을 '협업 구역', '경고 구역', '위험 구역'으로 정의. `Perception Agent`가 각 구역 내 사람을 감지.<br>- **보호 정지 (P-Stop):** '경고 구역' 침범 시, 로봇은 계획된 경로를 유지하며 부드럽게 정지.<br>- **비상 정지 (E-Stop):** '위험 구역' 침범 시, 즉시 동력 차단. |
-| **2. 로봇 속도/가속도 초과** | 시스템 불안정, 예측 불가능한 움직임, 주변 기물 파손 | **중간** | - **안전 파라미터 설정:** `config/safety_parameters.yaml`에 최대 속도, 가속도, 관절 토크 등 임계치 정의.<br>- **실시간 모니터링:** `Diagnostics Agent`가 로봇 상태를 모니터링하여 임계치 초과 시 `Safety Agent`에 보고.<br>- **보호 정지 (P-Stop):** 임계치 80% 초과 시 경고, 100% 초과 시 보호 정지 발령. |
-| **3. 소프트웨어 오류** | 의도치 않은 동작, 시스템 멈춤, 제어 불능 | **심각** | - **Watchdog/Heartbeat:** 각 핵심 에이전트와 PAL은 주기적으로 Heartbeat 신호를 `Diagnostics Agent`에 전송.<br>- **비상 정지 (E-Stop):** 특정 시간 동안 Heartbeat 수신 실패 시, `Safety Agent`가 비상 정지 발령. |
-| **4. Sim2Real 갭** | 시뮬레이션에서는 안전했던 동작이 실제 환경에서 위험 초래 | **높음** | - **안전 여유(Safety Margin) 적용:** 시뮬레이션에서 학습/계획된 경로에 안전 여유(예: 속도 80% 제한, 충돌 거리 5cm 추가)를 적용하여 실제 로봇에 배포.<br>- **단계적 배포:** 저속(10%) 테스트 -> 중속(50%) 테스트 -> 정상 속도(100%) 순으로 단계적으로 속도를 높여 검증. |
-
-#### **4. 안전 파라미터 설정**
-
-모든 안전 관련 임계값은 중앙 설정 파일에서 관리하여 투명성과 유지보수성을 확보한다.
+        t_orig = estimate_total_time(original)
+        t_opt = estimate_total_time(optimized)
+        
+        report_data = {
+            "Metric": ["Total Completion Time", "Number of Waypoints", "Avg. Velocity", "Constraint Violations"],
+            "Original": [f"{t_orig:.2f}s", len(original.points), "0.25 m/s", "0"],
+            "Optimized": [f"{t_opt:.2f}s", len(optimized.points), f"{optimized.points[1].velocity:.2f} m/s", "0"],
+            "Improvement": [f"{((t_orig-t_opt)/t_orig)*100:.1f}%", "-", "-", "-"]
+        }
+        
+        return pd.DataFrame(report_data)

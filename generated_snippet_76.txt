@@ -1,0 +1,27 @@
+# UR5e Safety Configuration Settings
+
+safety_limits:
+  joint_limits:
+    base: [-3.14, 3.14]
+    shoulder: [-3.14, 3.14]
+    elbow: [-3.14, 3.14]
+    wrist_1: [-3.14, 3.14]
+    wrist_2: [-3.14, 3.14]
+    wrist_3: [-3.14, 3.14]
+  
+  cartesian_limits:
+    max_tcp_speed: 0.25 # m/s (ISO 15066 standard)
+    max_tcp_accel: 1.2 # m/s^2
+    min_z_height: 0.05 # m (Table collision avoidance)
+
+  force_torque_limits:
+    max_force: 150.0 # Newtons
+    max_torque: 50.0 # Nm
+
+communication_safety:
+  heartbeat_timeout_ms: 100 # 0.1s loss triggers stop
+  rtde_watchdog_frequency: 500 # Hz
+
+emergency_logic:
+  stop_category: 1 # Controlled stop then power removal
+  auto_brake_release: false

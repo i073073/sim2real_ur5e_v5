@@ -1,4 +1,26 @@
+strategy_priority:
+  1: "Reinforcement Learning (PPO) - Policy Fine-tuning & Obstacle Avoidance"
+  2: "Genetic Algorithm (GA) - Cycle Time & Trajectory Waypoint Optimization"
+  3: "Bayesian Optimization (BO) - Hyperparameter & Reward Weight Tuning"
 
-#### **1.2. 유전 알고리즘 기반 공정 최적화기 (`src/process_optimizer.py`)**
+rl_params:
+  algorithm: "PPO"
+  policy: "MlpPolicy"
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  ent_coef: 0.01
+  reward_weights:
+    distance: 1.0
+    smoothness: 0.1
+    collision: -10.0
 
-분류된 웨이포인트를 입력받아 최적의 순서를 탐색하는 유전 알고리즘 모듈입니다.
+ga_params:
+  population_size: 50
+  generations: 100
+  mutation_rate: 0.1
+  crossover_rate: 0.8
+
+bo_params:
+  n_trials: 30
+  engine: "optuna"

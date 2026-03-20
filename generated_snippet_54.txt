@@ -1,4 +1,78 @@
+import streamlit as st
+import pandas as pd
+from src.core.parser import ProcessParser
+from src.core.models import RobotProcess
 
-### **4. 의존성 라이브러리 추가**
+def render_point_classification_ui():
+    st.header("📋 Process Program Editor")
+    
+    uploaded_file = st.file_uploader("Upload Robot Program (JSON or CSV)", type=["json", "csv"])
+    
+    if uploaded_file is not None:
+        content = uploaded_file.getvalue().decode("utf-8")
+        
+        # Initialize session state for the process
+        if "current_process" not in st.session_state:
+            if uploaded_file.name.endswith(".json"):
+                st.session_state.current_process = ProcessParser.from_json(content)
+            else:
+                st.session_state.current_process = ProcessParser.from_csv(content)
 
-`plotly` 라이브러리가 필요하므로 `requirements.txt` 파일에 추가합니다.
+        process = st.session_state.current_process
+
+        st.subheader(f"Editing: {process.name} (v{process.version})")
+
+        # Create a dataframe for display and editing
+        data = []
+        for p in process.points:
+            data.append({
+                "ID": p.id,
+                "Type": p.command_type,
+                "Target": str([round(x, 4) for x in p.target]),
+                "Classification": p.classification,
+                "Description": p.description
+            })
+        
+        df = pd.DataFrame(data)
+
+        # Use Streamlit Data Editor for classification
+        edited_df = st.data_editor(
+            df,
+            column_config={
+                "Classification": st.column_config.SelectboxColumn(
+                    "Classification",
+                    help="Categorize the importance of this point",
+                    options=["Mandatory", "Optional", "Delete"],
+                    required=True,
+                ),
+                "Description": st.column_config.TextColumn("Notes"),
+                "Target": st.column_config.TextColumn("Coordinates", disabled=True)
+            },
+            hide_index=True,
+            use_container_width=True,
+            key="process_editor"
+        )
+
+        # Sync changes back to session state
+        if st.button("Apply Changes & Validate"):
+            for i, row in edited_df.iterrows():
+                process.points[i].classification = row["Classification"]
+                process.points[i].description = row["Description"]
+            st.success("Changes saved to session memory.")
+
+        # Export functionality
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Preview Filtered Program"):
+                filtered = [p for p in process.points if p.classification != "Delete"]
+                st.write(f"Active Points: {len(filtered)} / Total: {len(process.points)}")
+                st.json([p.dict() for p in filtered])
+        
+        with col2:
+            json_string = ProcessParser.export_to_json(process)
+            st.download_button(
+                label="Download Optimized Program",
+                data=json_string,
+                file_name="optimized_process.json",
+                mime="application/json"
+            )

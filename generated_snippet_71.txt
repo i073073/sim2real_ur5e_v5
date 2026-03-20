@@ -1,0 +1,20 @@
+verification_targets:
+  genesis_viz:
+    min_fps: 30
+    tcp_offset_tolerance_mm: 0.1
+    render_latency_ms_limit: 33.3 # 30fps 기준
+  
+  rtde_connection:
+    target_ip: "127.0.0.1"
+    frequency_hz: 500
+    max_latency_ms: 2.0
+    allowed_packet_loss_pct: 0.01
+    heartbeat_timeout_ms: 500
+
+test_scenarios:
+  - name: "Static_Pose_Accuracy"
+    duration_sec: 10
+  - name: "High_Speed_Trajectory_Stress"
+    duration_sec: 30
+  - name: "Long_Term_Connection_Stability"
+    duration_sec: 3600 # 1 hour

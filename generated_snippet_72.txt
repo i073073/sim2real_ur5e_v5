@@ -1,0 +1,57 @@
+import time
+import numpy as np
+from src.hardware.ur_command_library import UR5eCommandLibrary
+from src.core.schemas import RobotStatus
+
+def test_rtde_stability(ip="127.0.0.1", duration=30):
+    """RTDE 연결의 지연 시간 및 패킷 무결성 검증"""
+    client = UR5eCommandLibrary(ip)
+    if not client.is_connected:
+        return "FAIL: Connection Error"
+
+    latencies = []
+    packet_count = 0
+    errors = 0
+    start_time = time.time()
+
+    print(f"[QA] Starting RTDE Stability Test for {duration}s...")
+    
+    while time.time() - start_time < duration:
+        loop_start = time.perf_counter()
+        try:
+            # 1. 데이터 수신 및 Pydantic 검증
+            status_data = client.get_robot_status()
+            packet_count += 1
+            
+            # 2. 지연 시간 측정
+            latency = (time.perf_counter() - loop_start) * 1000
+            latencies.append(latency)
+            
+            # 3. 데이터 무결성 체크 (관절 값이 NaN이 아닌지 등)
+            if np.any(np.isnan(status_data.actual_q)):
+                errors += 1
+                
+        except Exception as e:
+            errors += 1
+            print(f"Packet Error: {e}")
+        
+        # 500Hz 주기를 맞추기 위한 대기 (2ms)
+        time.sleep(0.002)
+
+    avg_latency = np.mean(latencies)
+    max_latency = np.max(latencies)
+    loss_rate = (errors / packet_count) * 100 if packet_count > 0 else 100
+
+    print(f"[QA] Test Finished. Avg Latency: {avg_latency:.2f}ms, Loss: {loss_rate:.4f}%")
+    client.disconnect()
+    
+    return {
+        "avg_latency": avg_latency,
+        "max_latency": max_latency,
+        "loss_rate": loss_rate,
+        "total_packets": packet_count
+    }
+
+if __name__ == "__main__":
+    results = test_rtde_stability()
+    print(results)

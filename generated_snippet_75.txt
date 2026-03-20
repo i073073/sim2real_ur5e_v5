@@ -1,0 +1,35 @@
+# UR5e AI 제어 시스템 안전 프로토콜 명세서 (v1.0)
+
+## 1. 개요
+본 문서는 AI 오케스트레이터 기반 UR5e 로봇 시스템의 안전 운영 프로토콜을 정의한다. 시뮬레이션(Genesis)에서 실기체(Real)로의 전환 시 발생할 수 있는 위험 요소를 식별하고, 이를 제어하기 위한 다중 안전 계층을 구축한다.
+
+## 2. 다중 안전 계층 아키텍처 (Layered Safety)
+
+### L1: 하드웨어 계층 (Hardware Safety)
+- **Emergency Stop (Category 0)**: 물리적 비상 정지 버튼 눌림 시 즉시 전원 차단 및 브레이크 체결.
+- **Protective Stop (Category 2)**: 안전 센서(Light Curtain, Laser Scanner) 감지 시 제어된 정지 수행.
+
+### L2: 제어기 계층 (Controller Safety - UR Control Box)
+- **Joint Limits**: 소프트웨어적 관절 가동 범위 제한 (Soft Limits).
+- **Force/Torque Monitoring**: 설정된 힘(N) 또는 토크(Nm) 임계값 초과 시 보호 정지 트리거.
+- **TCP Speed Limit**: 협동 운전 모드 시 최대 속도 250mm/s 제한.
+
+### L3: AI/소프트웨어 계층 (AI Orchestrator Safety)
+- **Safety Monitor Agent**: LangGraph 내에서 모든 명령을 실행 전 검증하는 독립 노드.
+- **Heartbeat Watchdog**: AI 오케스트레이터와 RTDE 통신 단절 시 로봇 자동 정지.
+- **Sim2Real Parity Check**: 시뮬레이션 환경의 가상 펜스와 실제 환경의 일치 여부 상시 검증.
+
+## 3. 운영 상태 정의 (Operational States)
+| 상태 | 정의 | 제어 권한 | 복구 절차 |
+| :--- | :--- | :--- | :--- |
+| **NORMAL** | 모든 안전 조건 충족 | AI Orchestrator | N/A |
+| **WARNING** | 임계값 80% 도달 또는 통신 지연 | AI (속도 감속) | 자동 복구 가능 |
+| **P-STOP** | 보호 정지 (센서 감지 등) | 하드웨어 강제 정지 | 수동 확인 후 재개 |
+| **E-STOP** | 비상 정지 (충돌/버튼) | 전원 차단 | 물리적 리셋 및 점검 필수 |
+
+## 4. 소프트웨어 안전 임계값 설정
+- **Max TCP Speed**: 0.5 m/s (고속 모드), 0.25 m/s (협동 모드)
+- **Max Joint Acceleration**: 1.5 rad/s²
+- **Collision Detection Sensitivity**: 150N (TCP 기준)
+- **Workspace Boundary**: 
+  - X: [-0.8, 0.8], Y: [-0.8, 0.8], Z: [0.05, 0.7] (단위: m)

@@ -1,0 +1,30 @@
+import numpy as np
+from src.genesis_ur5e_sim import UR5eSimulator
+
+def test_visualization_accuracy():
+    """시뮬레이터 내부 물리 상태와 렌더링 엔티티 간의 일치도 검증"""
+    sim = UR5eSimulator("config/ur5e_sim_config.yaml")
+    
+    # 1. 특정 포즈로 로봇 설정
+    test_q = [0, -1.57, 1.57, -1.57, -1.57, 0]
+    sim.robot.set_dofs_position(np.array(test_q))
+    sim.scene.step()
+    
+    # 2. 물리 엔진이 계산한 TCP 좌표 획득
+    calculated_tcp = sim.get_tcp_pose()
+    
+    # 3. 시각화 마커(Sphere)의 현재 위치 획득
+    visual_marker_pos = sim.tcp_visual.get_pos()
+    
+    # 4. 오차 계산 (물리 vs 시각화)
+    viz_error = np.linalg.norm(calculated_tcp - visual_marker_pos) * 1000 # mm
+    
+    print(f"[QA] Calculated TCP: {calculated_tcp}")
+    print(f"[QA] Visual Marker: {visual_marker_pos}")
+    print(f"[QA] Visualization Offset Error: {viz_error:.4f} mm")
+    
+    assert viz_error < 0.1, f"Visualization error {viz_error}mm exceeds tolerance!"
+    print("[QA] Genesis Visualization Accuracy: PASSED")
+
+if __name__ == "__main__":
+    test_visualization_accuracy()

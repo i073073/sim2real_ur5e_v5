@@ -1,0 +1,14 @@
+# UR5e Sim2Real 워크플로우 명세
+
+## 1. 전체 제어 루프 (Control Loop)
+1. **Perception**: Vision/Sensor 데이터가 Pydantic 모델로 변환되어 LangGraph State에 저장.
+2. **Reasoning**: LangGraph의 `Planner` 노드가 현재 상태와 목표를 비교하여 다음 `RTDECommand` 생성.
+3. **Validation**: 생성된 명령이 `RobotPose` 스키마 및 안전 임계값을 통과하는지 검증.
+4. **Execution**: 
+   - `Sim Mode`: Isaac Sim의 ROS2 Topic으로 명령 전달.
+   - `Real Mode`: `ur_rtde`를 통해 실기체 레지스터에 직접 쓰기.
+5. **Feedback**: RTDE Output 레지스터를 읽어 실행 완료 여부 확인 및 State 업데이트.
+
+## 2. Sim2Real 전환 전략 (Digital Twin)
+- **Abstraction Layer**: `BaseRobotInterface` 추상 클래스를 구현하여 `SimDriver`와 `RealDriver`가 동일한 메서드(`move_to_pose`, `get_state`)를 가지도록 설계.
+- **Environment Switching**: 환경 변수 `ROBOT_MODE` (SIM/REAL)에 따라 의존성 주입(DI).

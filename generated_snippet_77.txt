@@ -1,0 +1,53 @@
+import numpy as np
+from src.core.schemas import RobotStatus, RTDECommand
+
+class SafetyMonitorAgent:
+    """
+    AI Orchestrator의 명령을 실행하기 전 안전성을 최종 검증하는 에이전트.
+    RTDE 피드백을 실시간 모니터링하여 위험 상황 시 즉시 개입.
+    """
+    def __init__(self, config):
+        self.cfg = config['safety_limits']
+        self.last_status = None
+
+    def validate_command(self, cmd: RTDECommand) -> bool:
+        """명령어가 안전 임계값을 준수하는지 확인"""
+        # 1. 속도 제한 확인
+        if cmd.velocity > self.cfg['max_tcp_speed']:
+            print(f"[Safety] Command Rejected: Velocity {cmd.velocity} exceeds limit.")
+            return False
+        
+        # 2. 작업 반경(Workspace) 확인
+        if cmd.command_type == "moveL":
+            target_pos = cmd.target[:3]
+            if not self._is_within_workspace(target_pos):
+                print(f"[Safety] Command Rejected: Target {target_pos} out of workspace.")
+                return False
+        
+        return True
+
+    def check_runtime_safety(self, status: RobotStatus):
+        """실시간 로봇 상태 기반 위험 감지"""
+        # 1. 보호 정지/비상 정지 상태 확인
+        if status.is_protective_stopped or status.is_emergency_stopped:
+            return "EMERGENCY_STATE"
+
+        # 2. 과도한 힘 감지 (Collision Detection)
+        # 실제 구현 시 status에 포함된 TCP Force 데이터 사용
+        
+        return "SAFE"
+
+    def _is_within_workspace(self, pos):
+        z_min = self.cfg['min_z_height']
+        # 단순화된 Box 형태의 Workspace 검증
+        if pos[2] < z_min:
+            return False
+        return True
+
+def safety_check_node(state):
+    """LangGraph 노드: 실행 전 안전 검증"""
+    monitor = SafetyMonitorAgent(config_load()) # 설정 로드 가정
+    if monitor.validate_command(state['next_command']):
+        return {"safety_status": "PASSED"}
+    else:
+        return {"safety_status": "FAILED", "errors": ["Safety violation in command"]}

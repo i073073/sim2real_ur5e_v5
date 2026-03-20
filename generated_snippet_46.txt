@@ -1,45 +1,62 @@
+import numpy as np
+import pandas as pd
+from scipy.spatial.distance import euclidean
+from fastdtw import fastdtw
 
-### **실행 방법**
+class S2RValidator:
+    """URSim 데이터와 s2r 데이터를 비교 분석하는 QA 툴"""
+    
+    def __init__(self, config):
+        self.cfg = config
 
-1.  **프로젝트 구조 확인:**
-    위 파일들이 아래와 같은 디렉토리 구조에 맞게 저장되었는지 확인합니다. Streamlit의 다중 페이지 앱 기능을 위해 `pages` 디렉토리를 사용합니다.
+    def calculate_metrics(self, ref_data, sim_data):
+        """
+        ref_data: URSim 데이터 (Pandas DataFrame)
+        sim_data: 시뮬레이션 데이터 (Pandas DataFrame)
+        """
+        results = {}
+        
+        # 1. Joint RMSE 계산
+        q_ref = ref_data[[f'q{i}' for i in range(6)]].values
+        q_sim = sim_data[[f'q{i}' for i in range(6)]].values
+        
+        joint_rmse = np.sqrt(np.mean((q_ref - q_sim)**2, axis=0))
+        results['joint_rmse_avg'] = np.mean(joint_rmse)
+        results['joint_rmse_per_joint'] = joint_rmse.tolist()
 
-    ```
-    UR5e_Sim2Real/
-    ├── app/
-    │   ├── main_ui.py          # 기존 UI
-    │   └── pages/
-    │       └── 1_Process_Editor.py # 새로 추가된 UI
-    ├── data/
-    │   └── sample_process.script
-    ├── src/
-    │   └── program_parser.py
-    └── ... (기타 파일)
-    ```
+        # 2. TCP 위치 오차 (Euclidean Distance)
+        p_ref = ref_data[['x', 'y', 'z']].values
+        p_sim = sim_data[['x', 'y', 'z']].values
+        
+        pos_errors = [euclidean(p_ref[i], p_sim[i]) for i in range(len(p_ref))]
+        results['pos_error_max_mm'] = np.max(pos_errors) * 1000
+        results['pos_error_avg_mm'] = np.mean(pos_errors) * 1000
 
-2.  **Streamlit UI 실행:**
-    터미널에서 프로젝트의 루트 디렉토리(`UR5e_Sim2Real/`)로 이동한 후, 메인 UI 파일(`main_ui.py`)을 실행합니다.
+        # 3. DTW (Dynamic Time Warping) 경로 유사도
+        distance, _ = fastdtw(q_ref, q_sim, dist=euclidean)
+        results['dtw_distance'] = distance
 
-    ```bash
-    streamlit run app/main_ui.py
-    ```
+        return results
 
-3.  **사용:**
-    -   웹 브라우저에 UI가 실행되면, 왼쪽 사이드바에 `main_ui`와 `Process Editor` 두 개의 페이지가 나타납니다.
-    -   `Process Editor` 페이지로 이동합니다.
-    -   "공정 프로그램 파일(.script)을 업로드하세요" 섹션을 통해 `data/sample_process.script` 파일을 업로드합니다.
-    -   업로드가 완료되면 파싱된 포인트 목록이 표 형태로 나타납니다.
-    -   표의 '분류' 열에서 각 포인트의 드롭다운 메뉴를 클릭하여 'Mandatory', 'Optional', 'Delete'로 상태를 변경합니다.
-    -   분류 작업이 완료되면 '분류 결과 저장' 버튼을 클릭하고, 'JSON 파일로 다운로드' 버튼을 눌러 결과를 저장합니다.
+    def evaluate_pass_fail(self, metrics):
+        """설정된 임계값에 따른 합격 여부 판정"""
+        report = []
+        is_pass = True
 
---- TASK 12 RAW OUTPUT ---
+        if metrics['pos_error_avg_mm'] > self.cfg['cartesian_space']['pos_error_limit_mm']:
+            report.append(f"FAIL: Avg Pos Error {metrics['pos_error_avg_mm']:.2f}mm exceeds limit.")
+            is_pass = False
+        
+        if metrics['joint_rmse_avg'] > self.cfg['joint_space']['rmse_limit']:
+            report.append(f"FAIL: Joint RMSE {metrics['joint_rmse_avg']:.4f} exceeds limit.")
+            is_pass = False
 
-네, Reinforcement Learning & Optimization Engineer로서 주어진 과업을 수행하겠습니다. 본 과업의 목표는 로봇 공정 프로그램을 분석하여, **공정 완료 시간을 최소화**하는 최적의 경로를 생성하는 것입니다.
+        if is_pass:
+            report.append("SUCCESS: All metrics are within thresholds.")
+            
+        return is_pass, report
 
-우선순위에 따라 **유전 알고리즘(GA)**을 핵심 로직으로 사용하여 웨이포인트의 최적 순서를 결정하고, **베이지안 최적화(BO)**를 통해 공정의 전역 파라미터(예: 속도)를 튜닝하는 2단계 최적화 전략을 제안합니다. **강화학습(RL)**은 이 정적 최적화 문제보다 동적 환경에 더 적합하므로, 향후 실시간 장애물 회피나 공정 이상 감지 시 최적 경로를 동적으로 재수립하는 고급 기능으로 통합하는 방안을 보고서에 제시하겠습니다.
-
-### **1. 최적화된 공정 프로그램 생성 모듈**
-
-#### **1.1. 공정 시간 예측기 (`src/time_estimator.py`)**
-
-최적화의 기반이 되는 목적 함수(총 공정 시간)를 계산하기 위해, 각 로봇 이동 명령어(`movej`, `movel`)의 예상 소요 시간을 계산하는 모듈을 구현합니다.
+# 사용 예시
+# validator = S2RValidator(yaml.load(open('config/analysis_thresholds.yaml')))
+# metrics = validator.calculate_metrics(ursim_df, genesis_df)
+# status, msg = validator.evaluate_pass_fail(metrics)

@@ -1,0 +1,48 @@
+import time
+import pytest
+from src.hardware.ur_command_library import UR5eCommandLibrary
+from src.safety.monitor_agent import SafetyMonitorAgent
+
+def test_software_emergency_stop_latency():
+    """소프트웨어 트리거 비상 정지 지연 시간 측정"""
+    client = UR5eCommandLibrary("127.0.0.1") # URSim
+    
+    print("\n[Test] Triggering Software Emergency Stop...")
+    
+    # 1. 로봇 이동 시작
+    client.moveJ([0, -1.57, 1.57, -1.57, -1.57, 0], speed=1.0, asynchronous=True)
+    
+    # 2. 비상 정지 명령 송신 및 시간 측정
+    start_time = time.perf_counter()
+    client.stopJ(accel=10.0) # 급정지
+    
+    # 3. 로봇 정지 상태 확인 (RTDE 피드백)
+    while True:
+        status = client.get_robot_status()
+        # 실제 속도가 0에 가까워지면 정지로 간주
+        actual_q_speed = np.linalg.norm(client.rtde_r.getActualQd())
+        if actual_q_speed < 0.01:
+            stop_time = time.perf_counter()
+            break
+        if time.perf_counter() - start_time > 2.0:
+            pytest.fail("Robot failed to stop within timeout")
+
+    latency_ms = (stop_time - start_time) * 1000
+    print(f"Stop Latency: {latency_ms:.2f} ms")
+    
+    assert latency_ms < 500 # 0.5초 이내 정지 필수 (Category 1/2 기준)
+    client.disconnect()
+
+def test_boundary_violation_interlock():
+    """작업 영역 이탈 시 명령 차단 인터록 검증"""
+    monitor = SafetyMonitorAgent(config_load()) # 설정 로드
+    
+    # 위험한 위치 (Z축 바닥 충돌 위험)
+    unsafe_cmd = RTDECommand(
+        command_type="moveL",
+        target=[0.4, 0.2, -0.01, 0, 3.14, 0], # Z = -0.01
+        velocity=0.1
+    )
+    
+    assert monitor.validate_command(unsafe_cmd) is False
+    print("[Test] Boundary Violation Interlock: PASSED")

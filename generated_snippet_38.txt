@@ -1,6 +1,23 @@
+model:
+  name: "UR5e_Mimic_Net"
+  input_dim: 12 # Current Joints (6) + Target Pose (6)
+  output_dim: 6 # Next Joint Positions (6)
+  hidden_layers: [256, 512, 256]
+  activation: "relu"
 
-### **2. 강화학습 환경 및 에이전트 구현**
+training:
+  batch_size: 64
+  epochs: 100
+  learning_rate: 0.0005
+  weight_decay: 1e-5
+  validation_split: 0.2
+  device: "cuda" # or "cpu"
 
-#### **2.1. UR5e 강화학습 환경 (`src/rl_environment.py`)**
+optimization:
+  method: "Bayesian_Optimization"
+  n_trials: 20
+  target_metric: "val_rmse"
 
-s2r 시뮬레이터를 OpenAI Gym 스타일의 환경으로 래핑(wrapping)합니다. 이 환경은 RL 에이전트가 상호작용할 수 있는 인터페이스(reset, step)를 제공합니다.
+data:
+  raw_path: "data/raw/session_latest.json"
+  processed_path: "data/processed/train_data.pt"

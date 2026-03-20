@@ -1,4 +1,38 @@
+import json
+import csv
+import io
+from src.core.models import ProcessPoint, RobotProcess
 
-### **3. 성능 비교 대시보드 UI**
+class ProcessParser:
+    @staticmethod
+    def from_json(file_content: str) -> RobotProcess:
+        """Parses a JSON formatted process file."""
+        data = json.loads(file_content)
+        return RobotProcess(**data)
 
-Streamlit을 사용하여 분석 결과를 시각화하는 대시보드 페이지를 개발합니다. `plotly` 라이브러리를 사용하여 인터랙티브한 히트맵과 3D 궤적 뷰를 구현합니다.
+    @staticmethod
+    def from_csv(file_content: str) -> RobotProcess:
+        """Parses a CSV formatted process file. 
+        Expected headers: id, command_type, q0, q1, q2, q3, q4, q5, velocity, acceleration
+        """
+        f = io.StringIO(file_content)
+        reader = csv.DictReader(f)
+        points = []
+        for row in reader:
+            points.append(ProcessPoint(
+                id=int(row['id']),
+                command_type=row['command_type'],
+                target=[float(row[f'q{i}']) for i in range(6)],
+                velocity=float(row.get('velocity', 0.25)),
+                acceleration=float(row.get('acceleration', 1.2)),
+                classification="Mandatory"
+            ))
+        return RobotProcess(name="Imported CSV", version="1.0", points=points)
+
+    @staticmethod
+    def export_to_json(process: RobotProcess) -> str:
+        """Exports the filtered/classified process back to JSON."""
+        # Filter out points marked for deletion
+        filtered_points = [p for p in process.points if p.classification != "Delete"]
+        process.points = filtered_points
+        return process.json(indent=4)

@@ -1,4 +1,19 @@
+# Sim2Real Analysis Thresholds
 
-### **3. 포인트 분류 Streamlit UI**
+joint_space:
+  rmse_limit: 0.005 # radians
+  max_error_limit: 0.015 # radians
+  velocity_correlation_min: 0.98
 
-사용자가 공정 프로그램을 업로드하면, 파서가 이를 분석하여 이동 포인트 목록을 표로 보여줍니다. 사용자는 이 표에서 각 포인트를 '필수', '선택', '삭제' 중 하나로 분류할 수 있으며, 분류된 결과는 JSON 파일로 다운로드할 수 있습니다. Streamlit의 `data_editor`를 활용하여 사용자 친화적인 편집 환경을 제공합니다.
+cartesian_space:
+  pos_error_limit_mm: 2.0 # millimeters
+  ori_error_limit_deg: 1.0 # degrees
+  dtw_distance_max: 0.1
+
+temporal:
+  max_lag_ms: 10.0
+  frequency_jitter_max_ms: 2.0
+
+safety:
+  collision_threshold_n: 10.0 # Newton (Simulation contact force)
+  protective_stop_trigger: true

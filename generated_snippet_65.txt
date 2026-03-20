@@ -1,0 +1,65 @@
+import streamlit as st
+import json
+import pandas as pd
+from src.analysis.visualizer import PerformanceVisualizer
+
+def render_comparison_dashboard():
+    st.title("📊 UR5e Performance Comparison Dashboard")
+    
+    # Load Data
+    with open("data/comparison_results.json", "r") as f:
+        data = json.load(f)
+    
+    summary = data['summary']
+    segments_df = pd.DataFrame(data['segments'])
+
+    # 1. Top Level Metrics
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Initial Cycle Time", f"{summary['initial_total_time']}s")
+    col2.metric("Optimized Cycle Time", f"{summary['optimized_total_time']}s", f"-{summary['improvement_pct']}%")
+    col3.metric("Total Time Saved", f"{round(summary['initial_total_time'] - summary['optimized_total_time'], 2)}s")
+    col4.metric("Path Efficiency", f"+{round(summary['total_distance_saved_m']*100, 1)}cm")
+
+    st.divider()
+
+    # 2. 3D Trajectory Overlay & Heatmap
+    view_col, heat_col = st.columns([3, 2])
+
+    with view_col:
+        st.subheader("📍 3D Trajectory Overlay")
+        fig_3d = PerformanceVisualizer.create_3d_trajectory_view(
+            data['trajectories']['initial'], 
+            data['trajectories']['optimized']
+        )
+        st.plotly_chart(fig_3d, use_container_width=True)
+
+    with heat_col:
+        st.subheader("🔥 Segment Efficiency Heatmap")
+        fig_heat = PerformanceVisualizer.create_saving_heatmap(segments_df)
+        st.plotly_chart(fig_heat, use_container_width=True)
+
+    # 3. Detailed Metric Report
+    st.subheader("📝 Detailed Metric Report")
+    
+    # Calculate additional metrics
+    segments_df['Efficiency Index'] = (segments_df['saving'] / segments_df['initial_time']).round(3)
+    
+    st.dataframe(
+        segments_df[['id', 'name', 'initial_time', 'optimized_time', 'saving', 'Efficiency Index']],
+        column_config={
+            "initial_time": st.column_config.NumberColumn("Initial (s)"),
+            "optimized_time": st.column_config.NumberColumn("Optimized (s)"),
+            "saving": st.column_config.NumberColumn("Saved (s)", format="%.2f 📉"),
+            "Efficiency Index": st.column_config.ProgressColumn("Efficiency", min_value=0, max_value=0.3)
+        },
+        hide_index=True,
+        use_container_width=True
+    )
+
+    # Export Report
+    if st.button("Generate PDF Report"):
+        st.info("Generating high-resolution report... (Mock Action)")
+        st.success("Report 'UR5e_Optimization_v1.pdf' is ready for download.")
+
+if __name__ == "__main__":
+    render_comparison_dashboard()

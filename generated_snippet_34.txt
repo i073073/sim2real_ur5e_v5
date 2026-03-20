@@ -1,6 +1,14 @@
+replay:
+  data_source: "data/raw/session_latest.json"
+  interpolation: true # 데이터 포인트 간 부드러운 연결 여부
+  playback_speed: 1.0
+  sync_threshold_ms: 5.0 # 시뮬레이션과 로그 간 허용 시차
 
-## 3. Streamlit 기반 포인트 분류 UI
-
-Streamlit을 사용하여 파싱된 웨이포인트를 표시하고, 사용자가 각 포인트를 "필수", "선택", "삭제"로 분류할 수 있는 UI를 구현합니다. 이 분류 결과는 AI 에이전트의 학습 데이터셋을 정제하는 데 사용됩니다.
-
-### 3.1. 포인트 분류 UI 구현 (`src/point_classification_ui.py`)
+analysis:
+  metrics:
+    - "RMSE" # Root Mean Square Error
+    - "MAE"  # Mean Absolute Error
+    - "MAX_ERR" # Maximum Deviation
+  thresholds:
+    joint_error_rad: 0.01
+    tcp_error_mm: 2.0

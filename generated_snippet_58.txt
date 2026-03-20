@@ -1,19 +1,45 @@
+import numpy as np
 
-#### **4. 검증 결과**
+class ProcessObjective:
+    def __init__(self, config):
+        self.cfg = config
 
-##### **4.1. Genesis 시뮬레이터 시각화 정확성**
+    def calculate_segment_time(self, p1, p2, v_max, a_max):
+        """
+        두 점 사이의 이동 시간을 사다리꼴 속도 프로파일 기반으로 추정
+        t = (dist / v) + (v / a)
+        """
+        dist = np.linalg.norm(np.array(p2) - np.array(p1))
+        if dist == 0: return 0
+        
+        # 가속 구간과 정속 구간을 고려한 최소 시간 계산
+        t_acc = v_max / a_max
+        dist_acc = 0.5 * a_max * (t_acc**2)
+        
+        if dist > 2 * dist_acc:
+            t_const = (dist - 2 * dist_acc) / v_max
+            return 2 * t_acc + t_const
+        else:
+            return 2 * np.sqrt(dist / a_max)
 
-| 검증 항목 | 결과 | 판정 |
-| :--- | :--- | :--- |
-| **1. URDF 모델 로딩** | URDF 모델이 정상적으로 로드되어 UR5e 로봇의 형상이 정확하게 렌더링됨. 각 관절의 연결 부위 및 링크의 비율이 올바르게 표현됨. | **Pass** |
-| **2. 관절 제어 정확성** | `[0, -90, 90, -90, -90, 0]` (deg) 자세 명령 시, 로봇이 팔을 수직으로 세우고 손목을 아래로 꺾는 예상된 자세를 정확히 취함. | **Pass** |
-| **3. TCP 마커 정확성** | 로봇의 `tool0` 링크를 움직일 때마다 빨간색 구형 마커가 동일한 상대 위치(끝단에서 Z축으로 50mm)를 유지하며 함께 이동함을 확인. | **Pass** |
-| **4. 궤적 트레일 정확성** | 로봇이 원을 그리는 동작을 수행할 때, 생성된 청록색 트레일이 TCP 마커의 중심점을 정확히 따라가며 부드러운 원형 경로를 형성함. | **Pass** |
+    def evaluate_constraints(self, trajectory):
+        """제약 조건 위반 여부 확인 및 페널티 계산"""
+        penalty = 0
+        # 1. 관절 한계 및 속도 한계 체크
+        # 2. 충돌 가능성 체크 (Distance to Obstacles)
+        # 3. Jerk(가속도 변화율) 체크
+        return penalty
 
-**시각 자료:**
--   `reports/screenshots/genesis_pose_check.png` (관절 제어 자세 스크린샷)
--   `reports/screenshots/genesis_trajectory_check.png` (궤적 트레일 스크린샷)
-
-##### **4.2. URSim RTDE 연결 안정성**
-
-`scripts/verify_rtde_stability.py` 스크립트를 1시간 동안 실행한 결과는 다음과 같다.
+    def fitness_function(self, sequence, points_data):
+        """GA용 적합도 함수: 1 / (Total Time + Penalty)"""
+        total_time = 0
+        for i in range(len(sequence) - 1):
+            p1 = points_data[sequence[i]].target
+            p2 = points_data[sequence[i+1]].target
+            v = points_data[sequence[i+1]].velocity
+            a = points_data[sequence[i+1]].acceleration
+            
+            total_time += self.calculate_segment_time(p1, p2, v, a)
+        
+        penalty = self.evaluate_constraints(sequence)
+        return 1.0 / (total_time + penalty + 1e-6)

@@ -1,17 +1,54 @@
-# Dockerfile
-# Base image for ROS2 Humble on Ubuntu 22.04
-FROM ros:humble-ros-core
+from typing import TypedDict, Annotated, List, Union
+from langgraph.graph import StateGraph, END
 
-# Install necessary packages for UR5e and MoveIt! 2
-RUN apt-get update && apt-get install -y \
-    ros-humble-ur-robot-driver \
-    ros-humble-moveit \
-    python3-pip \
-    python3-pydantic
+# 1. 시스템 상태 정의
+class AgentState(TypedDict):
+    task: str
+    plan: List[str]
+    current_step: int
+    robot_status: str
+    errors: List[str]
+    is_finished: bool
 
-# Install Python dependencies for agents
-COPY requirements.txt /app/requirements.txt
-RUN pip install -r /app/requirements.txt
+# 2. 에이전트 노드 정의 (추상화)
+def strategic_planner(state: AgentState):
+    """고수준 목표를 세부 계획으로 분해"""
+    print(f"[Orchestrator] Planning for task: {state['task']}")
+    # LLM 로직이 들어갈 자리
+    return {"plan": ["move_to_target", "pick_object"], "current_step": 0}
 
-# Set entrypoint for ROS2 launch file
-CMD ["ros2", "launch", "ur5e_sim2real", "main_launch.py"]
+def robot_executor(state: AgentState):
+    """로봇 명령 실행"""
+    step = state['plan'][state['current_step']]
+    print(f"[Executor] Executing: {step}")
+    # ROS2 통신 로직이 들어갈 자리
+    return {"current_step": state['current_step'] + 1}
+
+def supervisor(state: AgentState):
+    """상태 확인 및 다음 단계 결정"""
+    if state['current_step'] >= len(state['plan']):
+        return "end"
+    return "continue"
+
+# 3. 그래프 구성
+workflow = StateGraph(AgentState)
+
+workflow.add_node("planner", strategic_planner)
+workflow.add_node("executor", robot_executor)
+
+workflow.set_entry_point("planner")
+
+workflow.add_edge("planner", "executor")
+workflow.add_conditional_edges(
+    "executor",
+    supervisor,
+    {
+        "continue": "executor",
+        "end": END
+    }
+)
+
+# 그래프 컴파일
+app = workflow.compile()
+
+print("AI Robot Orchestration Graph Initialized.")

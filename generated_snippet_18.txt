@@ -1,4 +1,102 @@
+import genesis as gs
+import numpy as np
+import yaml
 
-### 2.2. 데이터 품질 관리 모듈 (`src/data_quality_manager.py`)
+class UR5eSimulator:
+    def __init__(self, config_path):
+        # 1. 설정 로드
+        with open(config_path, 'r') as f:
+            self.cfg = yaml.safe_load(f)
+        
+        # Genesis 초기화
+        gs.init(backend=gs.gpu)
 
-Pydantic 모델을 사용하여 스키마 유효성을 검사하고, 추가적인 비즈니스 로직 기반의 데이터 품질 검사를 수행합니다.
+        # 2. 씬(Scene) 구성
+        self.scene = gs.Scene(
+            sim_options=gs.options.SimOptions(dt=self.cfg['scene']['dt']),
+            viewer_options=gs.options.ViewerOptions(
+                camera_pos=self.cfg['scene']['viewer']['eye'],
+                camera_lookat=self.cfg['scene']['viewer']['lookat'],
+                camera_up=self.cfg['scene']['viewer']['up'],
+                res=(1280, 720)
+            )
+        )
+
+        # 3. 환경 요소 추가 (평면 및 그리드)
+        self.scene.add_entity(gs.morphs.Plane())
+        
+        # 4. UR5e 로봇 로딩
+        self.robot = self.scene.add_entity(
+            gs.morphs.URDF(
+                file=self.cfg['robot']['urdf_path'],
+                pos=self.cfg['robot']['base_position'],
+                quat=self.cfg['robot']['base_quaternion'],
+                fixed=True
+            )
+        )
+
+        # 5. TCP 및 궤적 시각화 설정
+        self.tcp_offset = np.array(self.cfg['robot']['tcp_offset'])
+        self.trail_points = []
+        self.max_trail = self.cfg['visualization']['trail_max_points']
+        
+        # 시각화용 엔티티 (TCP 포인트)
+        self.tcp_visual = self.scene.add_entity(
+            gs.morphs.Sphere(radius=self.cfg['visualization']['tcp_marker_size'], visual=True),
+            surface=gs.surfaces.Rough(color=(0, 1, 0)) # Green TCP marker
+        )
+
+        # 6. 시뮬레이션 빌드
+        self.scene.build()
+
+    def get_tcp_pose(self):
+        """마지막 링크(tool0)로부터 50mm offset이 적용된 TCP 좌표 계산"""
+        # UR5e의 마지막 링크 인덱스 (일반적으로 7 또는 'tool0')
+        ee_link = self.robot.get_link('tool0')
+        pos, quat = ee_link.get_pose()
+        
+        # 쿼터니언을 회전 행렬로 변환하여 로컬 오프셋을 글로벌 좌표로 변환
+        from scipy.spatial.transform import Rotation as R
+        rot_matrix = R.from_quat([quat[1], quat[2], quat[3], quat[0]]).as_matrix()
+        global_tcp_pos = pos + rot_matrix @ self.tcp_offset
+        
+        return global_tcp_pos
+
+    def update_trail(self, current_tcp):
+        """포인트 트레일 렌더링 업데이트"""
+        self.trail_points.append(current_tcp)
+        if len(self.trail_points) > self.max_trail:
+            self.trail_points.pop(0)
+        
+        # Genesis의 시각화 기능을 사용하여 라인 또는 포인트 클라우드 업데이트
+        # 실제 구현 시 scene.draw_line 또는 시각화 프리미티브 사용
+        for i in range(len(self.trail_points) - 1):
+            self.scene.viewer.draw_line(
+                start=self.trail_points[i],
+                end=self.trail_points[i+1],
+                color=self.cfg['visualization']['trail_color'],
+                width=2.0
+            )
+
+    def run(self):
+        """메인 시뮬레이션 루프 및 인터페이스"""
+        print("UR5e Genesis Simulator Started.")
+        print("Use GUI Sliders to control joint values.")
+
+        while True:
+            # 1. 물리 스텝 진행
+            self.scene.step()
+
+            # 2. TCP 위치 계산 및 시각화 업데이트
+            tcp_pos = self.get_tcp_pose()
+            self.tcp_visual.set_pos(tcp_pos)
+            
+            # 3. 궤적 시각화
+            self.update_trail(tcp_pos)
+
+            # 4. 뷰어 업데이트
+            self.scene.viewer.render()
+
+if __name__ == "__main__":
+    sim = UR5eSimulator("config/ur5e_sim_config.yaml")
+    sim.run()

@@ -1,6 +1,52 @@
+import json
+import os
+import uuid
+from datetime import datetime
+from src.mlops.schemas import JointDataPoint, JointDataset
+from src.mlops.validator import DataQualityController
 
-## 3. 모델 개선 과정 및 결과 보고서 (Phase 2: GA)
+class URDataPipeline:
+    def __init__(self, storage_path="data/raw"):
+        self.storage_path = storage_path
+        self.qc = DataQualityController()
+        self.current_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        if not os.path.exists(storage_path):
+            os.makedirs(storage_path)
 
-### 3.1. 유전 알고리즘 기반 하이퍼파라미터 최적화 구현 (`src/optimize_ga.py`)
+    def process_and_save(self, raw_data_list: list):
+        """수집된 리스트 데이터를 검증 후 JSON으로 저장"""
+        validated_points = []
+        invalid_count = 0
 
-유전 알고리즘을 사용하여 PPO 하이퍼파라미터를 최적화합니다.
+        for item in raw_data_list:
+            try:
+                point = JointDataPoint(
+                    timestamp=item['timestamp'],
+                    joints=item['actual_q'],
+                    velocities=item['actual_qd']
+                )
+                # 품질 검증 수행
+                point = self.qc.validate_stream(point)
+                
+                if point.is_valid:
+                    validated_points.append(point)
+                else:
+                    invalid_count += 1
+            except Exception as e:
+                print(f"Validation Error: {e}")
+                invalid_count += 1
+
+        # 데이터셋 객체 생성
+        dataset = JointDataset(
+            session_id=self.current_session_id,
+            data_points=validated_points
+        )
+
+        # JSON 저장
+        file_path = os.path.join(self.storage_path, f"{self.current_session_id}.json")
+        with open(file_path, 'w') as f:
+            f.write(dataset.json(indent=4))
+
+        print(f"Pipeline Complete: {len(validated_points)} saved, {invalid_count} rejected.")
+        return file_path, len(validated_points), invalid_count

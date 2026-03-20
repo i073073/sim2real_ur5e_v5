@@ -1,0 +1,32 @@
+# AI-Robot-Orchestrator Project Structure & Artifact Management
+
+root:
+  - config/: # 모든 에이전트 공유 설정 파일
+      - orchestration_config.yaml # 시스템 전반 설정
+      - rtde_config.yaml # 통신 설정
+      - safety_settings.yaml # 안전 임계값
+  
+  - docs/: # 문서화 자료
+      - architecture/: # 아키텍처 전략 및 보고서
+      - management/: # 프로젝트 관리 (현황, 리스크, 자원)
+      - safety/: # 안전 프로토콜 및 검증 보고서
+      - analysis/: # 성능 분석 및 Sim2Real 비교 리포트
+  
+  - src/: # 소스 코드 (에이전트별 모듈화)
+      - core/: # 공통 스키마 및 파서
+      - hardware/: # RTDE 클라이언트 및 하드웨어 인터페이스
+      - simulation/: # Genesis 시뮬레이터 및 재생 엔진
+      - mlops/: # 데이터 파이프라인 및 검증 로직
+      - optimization/: # RL, GA, BO 최적화 알고리즘
+      - ui/: # Streamlit 대시보드 및 편집기
+  
+  - data/: # 데이터셋 및 로그 보관
+      - raw/: # URSim/실기체 수집 원본 데이터
+      - processed/: # 검증 및 정제된 학습 데이터
+      - analysis/: # 오차 분석 및 비교 결과 CSV
+  
+  - models/: # 학습된 모델 가중치 보관 (.pth, .zip)
+  
+  - tests/: # QA 및 단위 테스트 스크립트
+  
+  - infra/: # Docker 및 인프라 설정 파일

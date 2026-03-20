@@ -1,4 +1,39 @@
+import gymnasium as gym
+import torch
+from stable_baselines3 import PPO
+from src.models.mimic_net import UR5eMimicNet # 기존 모방 모델
 
-#### **1.3. 최적화 실행 및 결과 생성 스크립트 (`scripts/run_optimization.py`)**
+class UR5eRLAgent:
+    def __init__(self, env, mimic_model_path=None):
+        self.env = env
+        # 1. PPO 모델 초기화
+        self.model = PPO(
+            "MlpPolicy", 
+            env, 
+            verbose=1,
+            learning_rate=3e-4,
+            device="cuda"
+        )
+        
+        # 2. Mimic Model 가중치 전이 (Pre-training 적용)
+        if mimic_model_path:
+            self._load_mimic_weights(mimic_model_path)
 
-분류된 JSON 파일을 읽어 최적화기를 실행하고, 결과를 새로운 `.script` 파일로 생성하는 메인 스크립트입니다.
+    def _load_mimic_weights(self, path):
+        print(f"Transferring knowledge from {path}...")
+        mimic_net = UR5eMimicNet()
+        mimic_net.load_state_dict(torch.load(path))
+        
+        # PPO의 Actor 네트워크에 모방 학습 가중치 주입
+        with torch.no_grad():
+            self.model.policy.action_net.weight.copy_(mimic_net.network[-1].weight)
+            # 중간 레이어들도 구조가 같다면 매핑 가능
+
+    def train(self, total_timesteps=100000):
+        """강화학습 수행: 목표 도달 및 충돌 회피 학습"""
+        self.model.learn(total_timesteps=total_timesteps)
+        self.model.save("models/ur5e_optimized_ppo")
+
+    def get_action(self, obs):
+        action, _ = self.model.predict(obs, deterministic=True)
+        return action

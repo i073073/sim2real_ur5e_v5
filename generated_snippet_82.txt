@@ -1,0 +1,34 @@
+# High-Level Risk Management Plan
+
+risks:
+  - id: R-001
+    category: "Technical"
+    description: "Reality Gap (Sim2Real mismatch) leading to hardware collision."
+    impact: "Critical"
+    probability: "Medium"
+    mitigation: "Implement Pydantic validation layer and Safety Monitor Agent to filter commands before execution."
+    owner: "QA_Engineer"
+
+  - id: R-002
+    category: "Performance"
+    description: "Network latency in RTDE communication affecting real-time control."
+    impact: "High"
+    probability: "Low"
+    mitigation: "Use dedicated Ethernet with host network mode in Docker; monitor latency via 500Hz watchdog."
+    owner: "Software_Engineer"
+
+  - id: R-003
+    category: "Strategic"
+    description: "LLM hallucination in LangGraph planner creating unsafe trajectories."
+    impact: "Critical"
+    probability: "Medium"
+    mitigation: "Human-in-the-loop interface for high-risk tasks and deterministic safety interlocks in the controller layer."
+    owner: "AI_Orchestrator"
+
+  - id: R-004
+    category: "Data"
+    description: "Insufficient diversity in training data for unstructured environments."
+    impact: "Medium"
+    probability: "High"
+    mitigation: "Automated domain randomization in Genesis simulation to generate synthetic edge-case datasets."
+    owner: "MLOps_Engineer"

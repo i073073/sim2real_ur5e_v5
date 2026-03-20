@@ -1,4 +1,26 @@
+# Sim2Real 오차 분석 및 검증 절차서 (SOP)
 
-### **2. 공정 프로그램 파서 모듈**
+## 1. 데이터 수집 (Data Collection)
+1. URSim에서 특정 작업(예: Pick & Place)을 수행하며 RTDE를 통해 10Hz/500Hz 데이터를 수집한다.
+2. 동일한 제어 입력(Command)을 Genesis 시뮬레이터 또는 s2r 모델에 주입한다.
+3. 시뮬레이션 결과 데이터를 동일한 타임스탬프 형식으로 기록한다.
 
-`.script` 파일을 읽어 각 라인을 분석하고, 로봇의 이동 명령어(Waypoint)를 구조화된 데이터로 추출하는 파서 모듈입니다. 정규 표현식을 사용하여 다양한 공백과 파라미터를 처리할 수 있도록 견고하게 설계되었습니다.
+## 2. 전처리 (Preprocessing)
+1. **Time Alignment**: `timestamp`를 기준으로 두 데이터셋의 시작점을 동기화한다.
+2. **Resampling**: 수집 주기가 다를 경우(예: 10Hz vs 100Hz), 선형 보간법(Linear Interpolation)을 사용하여 샘플 수를 일치시킨다.
+3. **Coordinate Transformation**: 시뮬레이션과 URSim의 Base 좌표계가 일치하는지 확인한다.
+
+## 3. 오차 계산 및 시각화 (Calculation & Visualization)
+1. 정의된 메트릭(J-RMSE, P-Dist 등)을 계산한다.
+2. 관절별 오차 그래프(Error over Time)를 생성하여 특정 구간에서 오차가 급증하는지 확인한다.
+3. 3D 경로 시각화를 통해 궤적의 이탈 양상을 분석한다.
+
+## 4. 원인 분석 (Root Cause Analysis)
+오차가 한계치를 초과할 경우 다음 항목을 점검한다.
+- **물리 파라미터**: 질량, 관성, 마찰 계수 설정 오류.
+- **통신 지연**: 네트워크 레이턴시로 인한 제어 루프 지연.
+- **제어기 특성**: PID 게인 값의 차이 또는 가속도 제한 설정의 불일치.
+
+## 5. 보고 및 피드백 (Reporting)
+1. 분석 결과를 `test_result_report.md`에 기록한다.
+2. 발견된 Reality Gap을 줄이기 위한 시뮬레이터 튜닝 또는 모델 재학습을 요청한다.

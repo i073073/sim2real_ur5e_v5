@@ -1,4 +1,18 @@
+from pydantic import BaseModel, Field
+from typing import List, Literal
 
-### **2. 성능 분석 백엔드 모듈**
+class ProcessPoint(BaseModel):
+    """Model representing a single waypoint in a robot process."""
+    id: int
+    command_type: Literal["moveJ", "moveL"]
+    target: List[float] = Field(..., min_items=6, max_items=6)
+    velocity: float = 0.25
+    acceleration: float = 1.2
+    classification: Literal["Mandatory", "Optional", "Delete"] = "Mandatory"
+    description: str = ""
 
-두 개의 로그 파일과 스크립트 파일을 입력받아, 총 소요 시간, 이동 거리, 구간별 성능 지표 등 상세 메트릭을 계산하는 분석기 클래스를 구현합니다.
+class RobotProcess(BaseModel):
+    """Model representing a full sequence of robot commands."""
+    name: str
+    version: str
+    points: List[ProcessPoint]

@@ -1,11 +1,43 @@
+import numpy as np
+import pandas as pd
 
-### 4.3. 실행 결과
+class MotionComparator:
+    def __init__(self):
+        self.errors = []
 
-*   **UI 접속:** 웹 브라우저에서 Streamlit UI에 접속합니다.
-*   **파일 업로드:** 사이드바의 "Program Upload" 섹션에서 `data/mock_program.txt` 파일을 업로드합니다.
-*   **포인트 분류:** UI에 파싱된 웨이포인트 목록이 표시됩니다. 각 웨이포인트 옆의 라디오 버튼을 사용하여 "필수", "선택", "삭제" 중 하나를 선택합니다.
-    *   **예시 분류:**
-        *   `wp_001` (Home position): "필수" (시작/종료 지점)
-        *   `wp_003` (Pick position): "필수" (핵심 작업 지점)
-        *   `wp_006` (Move to place area): "선택" (경로 최적화 가능 지점)
-*   **결과 저장:** "Save Classification Results" 버튼을 클릭하면 분류 결과가 `data/mock_program.txt_classified.json` 파일로 저장됩니다.
+    def calculate_step_error(self, cmd_q, sim_q, timestamp):
+        """각 스텝별 관절 오차 계산"""
+        cmd_q = np.array(cmd_q)
+        sim_q = np.array(sim_q)
+        
+        # Joint-wise Euclidean Distance
+        joint_diff = np.abs(cmd_q - sim_q)
+        rmse = np.sqrt(np.mean(joint_diff**2))
+        
+        error_data = {
+            "timestamp": timestamp,
+            "rmse": rmse,
+            "max_joint_diff": np.max(joint_diff),
+            "joint_errors": joint_diff.tolist()
+        }
+        return error_data
+
+    def generate_summary(self, results):
+        """전체 세션에 대한 통계 분석"""
+        df = pd.DataFrame(results)
+        
+        summary = {
+            "total_points": len(df),
+            "avg_rmse": df['rmse'].mean(),
+            "max_rmse": df['rmse'].max(),
+            "std_rmse": df['rmse'].std(),
+            "fidelity_score": max(0, 100 - (df['rmse'].mean() * 1000)) # 단순 점수화
+        }
+        
+        print("\n=== Sim2Real Motion Comparison Summary ===")
+        for k, v in summary.items():
+            print(f"{k}: {v:.4f}")
+        
+        # CSV 결과 저장 (MLOps 추적용)
+        df.to_csv("data/analysis/latest_comparison.csv", index=False)
+        return summary

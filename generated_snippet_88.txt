@@ -1,0 +1,24 @@
+# 에이전트 협업 및 주요 의사결정 로그
+
+## [2023-10-27] 실기체 통합 전 최종 점검 회의
+- **참석자**: AI Orchestrator, Technical Architect, Software Eng, QA Eng, Project Coordinator
+- **안건**: URSim에서 검증된 모델의 실기체 배포 승인 여부
+- **결정 사항**: 
+  1. QA Eng의 안전 테스트 결과(ST-01~05)가 모두 PASS이므로 배포를 승인함.
+  2. Software Eng은 배포 전 하드웨어 비상 정지 버튼의 물리적 작동 여부를 재확인할 것.
+  3. MLOps Eng은 실기체 가동 즉시 데이터를 수집하여 Sim2Real 오차 분석을 수행할 것.
+
+## [2023-10-25] 최적화 전략 변경
+- **참석자**: RL & Opt. Eng, AI Research Scientist, Project Coordinator
+- **안건**: 순수 RL 학습의 수렴 속도 저하 문제 해결
+- **결정 사항**: 
+  1. 전문가 데이터를 활용한 모방 학습(Behavioral Cloning)을 선행하기로 함.
+  2. 이를 통해 RL의 초기 탐색 시간을 단축하고 안정성을 확보함.
+  3. 결과적으로 공정 시간 18.9% 단축이라는 성과를 도출함.
+
+## [2023-10-23] 데이터 표준화 합의
+- **참석자**: MLOps Eng, Technical Architect, Software Eng
+- **안건**: 에이전트 간 데이터 교환 규격 통일
+- **결정 사항**: 
+  1. 모든 데이터 교환은 `src/core/schemas.py`에 정의된 Pydantic 모델을 사용함.
+  2. JSON 포맷을 기본으로 하며, 타임스탬프는 Unix Epoch 형식을 따름.

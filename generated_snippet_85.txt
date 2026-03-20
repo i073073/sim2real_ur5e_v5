@@ -1,0 +1,34 @@
+{
+  "project_id": "AI-ROBOT-2023",
+  "resource_status": {
+    "computing": {
+      "GPU_Server_01": "In Use (RL Training - RL & Opt. Eng.)",
+      "GPU_Server_02": "Available (Reserved for Genesis Sim - Simulation Eng.)",
+      "Edge_PC_UR5e": "Setup (Software Eng.)"
+    },
+    "hardware": {
+      "UR5e_Robot_Arm": "Standby (Safety Check - QA Eng.)",
+      "UR_Control_Box": "Connected (RTDE Test - Software Eng.)"
+    }
+  },
+  "collaboration_matrix": [
+    {
+      "from": "MLOps Eng.",
+      "to": "RL & Opt. Eng.",
+      "item": "Validated Joint Dataset (JSON)",
+      "frequency": "Daily"
+    },
+    {
+      "from": "Simulation Eng.",
+      "to": "QA Eng.",
+      "item": "TCP Visualization Logs",
+      "frequency": "On-demand"
+    },
+    {
+      "from": "Technical Architect",
+      "to": "All Agents",
+      "item": "Updated Pydantic Schemas",
+      "frequency": "Weekly"
+    }
+  ]
+}

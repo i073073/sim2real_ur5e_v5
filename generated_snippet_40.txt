@@ -1,4 +1,25 @@
+import optuna
+import torch
+import torch.optim as optim
+from src.models.mimic_net import UR5eMimicNet
+# 데이터 로더 및 학습 루프 생략 (추상화)
 
-#### **2.3. 강화학습 미세 조정 실행 스크립트 (`scripts/run_rl_finetuning.py`)**
+def objective(trial):
+    # 하이퍼파라미터 탐색 공간 정의 (Bayesian Optimization)
+    lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
+    hidden_size = trial.suggest_categorical("hidden_size", [128, 256, 512])
+    dropout = trial.suggest_float("dropout", 0.0, 0.3)
 
-모든 구성요소를 결합하여 실제 RL 학습을 수행하는 메인 스크립트입니다.
+    model = UR5eMimicNet(hidden_dims=[hidden_size, hidden_size*2, hidden_size]).to("cuda")
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+    criterion = torch.nn.MSELoss()
+
+    # 5 Epoch 동안 간이 학습 후 검증 오차 반환
+    val_rmse = train_and_evaluate(model, optimizer, criterion, epochs=5)
+    return val_rmse
+
+if __name__ == "__main__":
+    study = optuna.create_study(direction="minimize")
+    study.optimize(objective, n_trials=20)
+    
+    print(f"Best Hyperparams: {study.best_params}")

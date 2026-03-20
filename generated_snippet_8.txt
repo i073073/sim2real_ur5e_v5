@@ -1,26 +1,23 @@
-sequenceDiagram
-    participant User/Goal
-    participant PA as Perception Agent
-    participant P as Planning Agent
-    participant EA as Execution Agent
-    participant MA as Monitoring Agent
-    participant UR5e as UR5e Hardware
+system:
+  project_name: "AI-Robot-Orchestrator"
+  version: "1.0.0"
+  framework: "langgraph"
 
-    User/Goal->>P: Task Goal (e.g., "Pick up object A")
-    loop Real-time Loop
-        UR5e->>PA: Sensor Data (RTDE, Camera)
-        PA->>P: WorldState (Pydantic Model)
-        P->>P: Check Goal/WorldState difference
-        alt New Plan Needed
-            P->>P: Generate Trajectory (MoveIt! 2)
-            P->>EA: TrajectoryCommand (Pydantic Model)
-            EA->>UR5e: Execute Trajectory (RTDE)
-            UR5e->>MA: Real-time Status Update (RTDE)
-            MA->>MA: Check Safety/Progress
-            alt Collision Detected or Error
-                MA->>P: ReplanningRequest
-                P->>P: Generate New Trajectory
-                P->>EA: TrajectoryCommand (New Plan)
-            end
-        end
-    end
+agents:
+  orchestrator:
+    role: "Strategic Planner"
+    llm: "gpt-4-turbo"
+    max_retries: 3
+  
+  navigator:
+    role: "Path Planning Specialist"
+    tools: ["ros2_nav2_client", "map_server"]
+    
+  manipulator:
+    role: "Precision Control Specialist"
+    tools: ["moveit_interface", "gripper_control"]
+
+workflow:
+  timeout: 300 # seconds
+  safety_check_required: true
+  allow_human_intervention: true

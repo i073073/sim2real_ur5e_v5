@@ -1,4 +1,90 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import yaml
+import time
+from hardware.ur_command_library import UR5eCommandLibrary
+from utils.data_logger import JointDataLogger
 
-### **3. MLOps 플랫폼 연동 보고서**
+# Load Config
+with open("config/settings.yaml", "r") as f:
+    config = yaml.safe_load(f)
 
-데이터 파이프라인과 검증 모듈을 MLOps 플랫폼과 연동하여, 데이터 중심의 AI 개발 워크플로우를 구축하는 방안을 제시합니다.
+st.set_page_config(page_title="UR5e Control Interface", layout="wide")
+
+st.title("🤖 UR5e RTDE Control Panel")
+
+# Sidebar - Connection Settings
+st.sidebar.header("Connection Settings")
+ip_address = st.sidebar.text_input("Robot IP", value=config['robot']['ip'])
+connect_btn = st.sidebar.button("Connect to URSim")
+
+if "robot" not in st.session_state:
+    st.session_state.robot = None
+    st.session_state.logger = None
+
+if connect_btn:
+    st.session_state.robot = UR5eCommandLibrary(ip_address)
+    if st.session_state.robot.is_connected:
+        st.sidebar.success("Connected!")
+        st.session_state.logger = JointDataLogger(
+            st.session_state.robot, 
+            frequency_hz=config['logging']['sample_rate_hz']
+        )
+        st.session_state.logger.start()
+    else:
+        st.sidebar.error("Connection Failed")
+
+# Main Interface
+if st.session_state.robot and st.session_state.robot.is_connected:
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        st.subheader("Control Commands")
+        
+        tab1, tab2, tab3 = st.tabs(["moveJ (Joint)", "moveL (Linear)", "speedJ (Jog)"])
+        
+        with tab1:
+            q_input = st.text_input("Target Joints (rad, comma separated)", "0.0, -1.57, 1.57, -1.57, -1.57, 0.0")
+            v_j = st.slider("Velocity (rad/s)", 0.1, 3.0, 1.0)
+            a_j = st.slider("Acceleration (rad/s²)", 0.1, 5.0, 1.2)
+            if st.button("Execute moveJ"):
+                q = [float(x.strip()) for x in q_input.split(",")]
+                st.session_state.robot.moveJ(q, speed=v_j, accel=a_j)
+                st.info(f"Moving to {q}")
+
+        with tab2:
+            p_input = st.text_input("Target Pose (x,y,z,rx,ry,rz)", "0.4, 0.2, 0.3, 0.0, 3.14, 0.0")
+            v_l = st.slider("Velocity (m/s)", 0.01, 0.5, 0.1)
+            if st.button("Execute moveL"):
+                p = [float(x.strip()) for x in p_input.split(",")]
+                st.session_state.robot.moveL(p, speed=v_l)
+                st.info(f"Moving to pose {p}")
+
+        with tab3:
+            st.write("Continuous Joint Speed")
+            qd_val = st.slider("Base Joint Speed", -1.0, 1.0, 0.0)
+            if st.button("Apply speedJ"):
+                st.session_state.robot.speedJ([qd_val, 0, 0, 0, 0, 0], accel=0.5)
+            if st.button("STOP", type="primary"):
+                st.session_state.robot.stopJ()
+
+    with col2:
+        st.subheader("Real-time Telemetry (10Hz)")
+        placeholder = st.empty()
+        
+        # Simple loop to update UI
+        for _ in range(100): # In a real app, use a more robust refresh mechanism
+            current_q = st.session_state.robot.get_actual_q()
+            current_tcp = st.session_state.robot.get_actual_tcp()
+            
+            with placeholder.container():
+                st.metric("Base Joint", f"{current_q[0]:.4f} rad")
+                st.write("**Current Joint State:**")
+                st.dataframe(pd.DataFrame([current_q], columns=[f"J{i}" for i in range(6)]))
+                st.write("**Current TCP Pose:**")
+                st.write(current_tcp)
+            time.sleep(0.1)
+
+else:
+    st.warning("Please connect to the robot/URSim via the sidebar.")

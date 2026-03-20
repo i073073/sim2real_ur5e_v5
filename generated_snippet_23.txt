@@ -1,2 +1,46 @@
+import threading
+import time
+import csv
+import os
+from datetime import datetime
 
-검증 로직을 쉽게 실행할 수 있도록 별도의 실행 스크립트를 제공합니다.
+class JointDataLogger:
+    def __init__(self, rtde_client, frequency_hz: int = 10, log_dir: str = "logs"):
+        self.client = rtde_client
+        self.interval = 1.0 / frequency_hz
+        self.log_dir = log_dir
+        self.running = False
+        self.thread = None
+        
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+    def _logging_loop(self):
+        filename = os.path.join(self.log_dir, f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+        with open(filename, mode='w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(["timestamp", "q0", "q1", "q2", "q3", "q4", "q5"])
+            
+            while self.running:
+                start_time = time.perf_counter()
+                if self.client.is_connected:
+                    q = self.client.get_actual_q()
+                    writer.writerow([time.time()] + q)
+                
+                # Maintain 10Hz frequency
+                elapsed = time.perf_counter() - start_time
+                sleep_time = max(0, self.interval - elapsed)
+                time.sleep(sleep_time)
+
+    def start(self):
+        if not self.running:
+            self.running = True
+            self.thread = threading.Thread(target=self._logging_loop, daemon=True)
+            self.thread.start()
+            print("Logging started at 10Hz.")
+
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
+            print("Logging stopped.")

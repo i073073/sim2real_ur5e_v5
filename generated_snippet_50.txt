@@ -1,12 +1,25 @@
+import optuna
+from src.rl.ur5e_ppo_agent import UR5eRLAgent
 
---- TASK 13 RAW OUTPUT ---
+def objective(trial):
+    # 1. 튜닝할 하이퍼파라미터 제안
+    lr = trial.suggest_float("lr", 1e-5, 1e-3, log=True)
+    gamma = trial.suggest_float("gamma", 0.9, 0.999)
+    dist_reward_weight = trial.suggest_float("dist_w", 0.5, 2.0)
 
-네, Software Engineer로서 요청하신 '최초 vs 최적화 프로그램 성능 비교 대시보드' 개발 과업을 수행하겠습니다.
+    # 2. 환경 및 에이전트 설정 (가상 환경)
+    # env = UR5eEnv(reward_weights={'distance': dist_reward_weight})
+    # agent = UR5eRLAgent(env)
+    
+    # 3. 짧은 학습 및 평가
+    # score = evaluate_agent(agent, lr, gamma)
+    
+    # Mock score for demonstration
+    score = -(lr - 0.0003)**2 + gamma * 10 
+    return score
 
-본 대시보드는 사용자가 최초 공정 프로그램과 AI에 의해 최적화된 공정 프로그램의 실행 결과를 직관적으로 비교하고, 성능 개선 효과를 정량적으로 분석할 수 있도록 지원합니다. 핵심 기능으로 구간별 시간 변화를 보여주는 히트맵과 두 경로를 3D 공간에서 비교하는 시각화를 포함합니다.
-
----
-
-### **1. 분석용 모의 데이터 생성**
-
-대시보드 시연을 위해, '최초' 프로그램과 '최적화' 프로그램의 실행 로그를 모의로 생성합니다. 최적화된 로그는 총 실행 시간이 더 짧고, 일부 구간의 경로가 변경된 것을 가정합니다.
+if __name__ == "__main__":
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials=30)
+    
+    print(f"Best System Parameters: {study.best_params}")

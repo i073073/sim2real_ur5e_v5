@@ -1,17 +1,29 @@
+import numpy as np
+from src.hardware.ur_command_library import UR5eCommandLibrary
+# Genesis 시뮬레이터 모듈이 있다고 가정 (Mocking 또는 실제 연결)
 
-## 4. 모델 성능 검증 보고서
+def verify_sim2real_pose_error(sim_tcp, real_tcp_func):
+    """시뮬레이션 TCP와 실제(RTDE) TCP 간의 오차 측정"""
+    print("\n[Test] Sim2Real Pose Alignment Check")
+    
+    # 실제 로봇(또는 URSim)에서 현재 TCP 포즈 획득
+    real_tcp = np.array(real_tcp_func())
+    sim_tcp = np.array(sim_tcp)
+    
+    # 유클리드 거리 오차 계산 (Position만 우선 검증)
+    pos_error = np.linalg.norm(sim_tcp[:3] - real_tcp[:3])
+    
+    print(f"Sim TCP: {sim_tcp[:3]}")
+    print(f"Real TCP: {real_tcp[:3]}")
+    print(f"Euclidean Distance Error: {pos_error * 1000:.4f} mm")
+    
+    # 1mm 이내 오차일 경우 합격
+    threshold = 0.001 
+    if pos_error < threshold:
+        print("Result: PASSED")
+    else:
+        print(f"Result: FAILED (Error exceeds {threshold*1000}mm)")
 
-### 4.1. 학습 결과 요약
-
-**모델:** ImitationModel (MLP)
-**데이터셋:** URSim 궤적 데이터 (1000 샘플)
-**학습 손실 (Train Loss):** 0.000123 (MSE)
-**검증 손실 (Validation Loss):** 0.000135 (MSE)
-
-**분석:** 학습 손실과 검증 손실이 매우 낮고 유사하게 나타났습니다. 이는 모델이 전문가 궤적을 성공적으로 모방하고 있으며, 과적합(Overfitting) 없이 일반화 능력을 갖추고 있음을 시사합니다.
-
-### 4.2. 모델 성능 검증 (Rollout Simulation)
-
-학습된 모델의 실제 성능을 검증하기 위해, 시뮬레이션 환경에서 모델을 사용하여 궤적을 재생하는 "Rollout Simulation"을 수행합니다.
-
-#### 4.2.1. 검증 스크립트 (`src/verify_model.py`)
+# 실행 예시
+# client = UR5eCommandLibrary("127.0.0.1")
+# verify_sim2real_pose_error([0.4, 0.2, 0.3, 0, 3.14, 0], client.get_actual_tcp)

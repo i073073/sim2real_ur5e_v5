@@ -1,2 +1,41 @@
+import numpy as np
+from pygad import GA
 
-### **2. 최적화 결과 보고서**
+class TrajectoryOptimizerGA:
+    def __init__(self, waypoints):
+        self.waypoints = waypoints # 방문해야 할 목표 지점들
+
+    def fitness_func(self, ga_instance, solution, solution_idx):
+        """
+        Fitness: 1 / (Total Distance + Jerk Penalty)
+        경로가 짧고 급격한 가속이 없을수록 높은 점수
+        """
+        ordered_waypoints = self.waypoints[solution.astype(int)]
+        
+        # 1. 총 이동 거리 계산
+        dist = 0
+        for i in range(len(ordered_waypoints) - 1):
+            dist += np.linalg.norm(ordered_waypoints[i+1] - ordered_waypoints[i])
+        
+        # 2. Smoothness (Jerk) 계산 - 단순화된 모델
+        jerk = np.sum(np.diff(ordered_waypoints, n=2)**2)
+        
+        fitness = 1.0 / (dist + 0.1 * jerk + 1e-6)
+        return fitness
+
+    def optimize(self):
+        num_genes = len(self.waypoints)
+        ga_instance = GA(
+            num_generations=100,
+            num_parents_mating=10,
+            fitness_func=self.fitness_func,
+            sol_per_pop=50,
+            num_genes=num_genes,
+            gene_type=int,
+            low_bound=0,
+            high_bound=num_genes-1,
+            allow_duplicate_genes=False
+        )
+        ga_instance.run()
+        best_solution, _, _ = ga_instance.best_solution()
+        return best_solution

@@ -1,0 +1,24 @@
+# config/rtde_config.yaml
+connection:
+  robot_ip: "192.168.1.100" # 실기체 IP (Sim 시 localhost/bridge IP)
+  rtde_port: 30004
+  frequency: 500 # Hz
+
+registers:
+  input_setup:
+    - "input_double_register_0" # Target X
+    - "input_double_register_1" # Target Y
+    - "input_double_register_2" # Target Z
+  output_setup:
+    - "actual_q"
+    - "actual_TCP_pose"
+    - "robot_mode"
+    - "safety_status"
+
+safety_limits:
+  max_joint_speed: 1.5
+  max_tcp_speed: 0.3
+  workspace_boundary:
+    x: [-0.8, 0.8]
+    y: [-0.8, 0.8]
+    z: [0.0, 0.7]

@@ -1,0 +1,20 @@
+# Research-level Algorithm Configurations
+
+diffusion_policy:
+  model: "ConditionalDiffusion"
+  n_steps: 50 # Denoising steps
+  beta_schedule: "squaredcos_cap_v2"
+  input_horizon: 2 # Number of past observations
+  prediction_horizon: 8 # Number of future actions to predict
+  hidden_dim: 256
+
+differentiable_sysid:
+  target_parameters: ["friction", "damping", "armature"]
+  learning_rate: 0.01
+  batch_size: 32
+  loss_function: "MSE"
+  optimization_steps: 500
+
+genesis_integration:
+  use_cuda_graph: true
+  enable_gradients: true # Essential for Differentiable Physics

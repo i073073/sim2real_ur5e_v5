@@ -1,0 +1,24 @@
+# UR5e Sim2Real 고도화를 위한 신규 알고리즘 적용 제안서
+
+## 1. 제안 배경
+현재의 Behavioral Cloning(BC) 모델은 전문가의 궤적을 잘 따라가지만, 환경의 미세한 변화나 노이즈에 취약하다. 또한, Sim2Real 격차를 줄이기 위한 물리 파라미터 튜닝이 현재 수동 또는 베이지안 최적화에 의존하고 있어 수렴 속도가 느리다.
+
+## 2. 제안 알고리즘 1: Diffusion Policy 기반 궤적 생성
+- **목표**: UR5e의 복잡한 조립 및 Pick & Place 동작의 유연성 및 강건성 확보.
+- **적용 방안**: 
+  - MLOps 파이프라인에서 수집된 전문가 데이터를 Diffusion Model의 학습 데이터로 사용.
+  - 관절 각도($q$)를 직접 예측하는 대신, 궤적의 노이즈를 제거(Denoising)하는 방식으로 최적의 Action 시퀀스를 생성.
+- **기대 효과**: 장애물 회피 및 비정형 물체 조작 시 성공률 15% 이상 향상.
+
+## 3. 제안 알고리즘 2: Differentiable SysID (System Identification)
+- **목표**: Genesis 물리 엔진의 파라미터를 실제 UR5e 하드웨어 특성에 자동 맞춤.
+- **적용 방안**:
+  - 실제 로봇의 RTDE 데이터와 시뮬레이션 데이터 간의 오차(L2 Loss)를 정의.
+  - Genesis의 미분 기능을 통해 마찰 계수($\mu$)와 관성($I$)에 대한 Loss의 Gradient를 계산.
+  - Adam Optimizer를 사용하여 시뮬레이션 파라미터를 실제 로봇에 수렴시킴.
+- **기대 효과**: Sim2Real 오차(RMSE)를 현재 0.0015 rad에서 0.0005 rad 이하로 단축.
+
+## 4. 실행 로드맵
+1. **Step 1**: Genesis 엔진의 미분 가능 인터페이스를 활용한 자동 SysID 모듈 개발.
+2. **Step 2**: 기존 MimicNet을 Diffusion Policy 네트워크로 교체 및 시뮬레이션 학습.
+3. **Step 3**: LangGraph 오케스트레이터에 Diffusion Policy 에이전트 통합.

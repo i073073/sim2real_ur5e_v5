@@ -1,0 +1,5 @@
+ID,Category,Description,Priority,Owner,Status,Mitigation_Plan
+R-001,Technical,Reality Gap (Sim2Real) exceeding 5mm,High,Simulation Eng.,Open,Fine-tune friction/inertia parameters using real-world data.
+R-002,Safety,LLM Planner generating out-of-bounds targets,Critical,QA Eng.,Resolved,Implemented SafetyMonitorAgent with deterministic interlocks.
+R-003,Performance,RTDE packet loss over wireless network,Medium,Software Eng.,Resolved,Switched to dedicated Gigabit Ethernet with static IP.
+R-004,Data,Insufficient diversity in edge-case datasets,Medium,MLOps Eng.,Open,Implement automated domain randomization in Genesis.

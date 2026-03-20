@@ -1,19 +1,41 @@
-graph TD
-    A[URSim / Real Robot] -->|RTDE 10Hz| B(DataLogger Service);
-    B -->|Generates| C[Raw Data (*.jsonl)];
-    C -->|Git Commit & Push| D(GitHub Repository);
-    D -- Trigger --> E(GitHub Actions CI);
-    subgraph "CI/CD Pipeline for Data"
-        E --> F{Run Data Validation};
-        F -- Success --> G[Version Data with DVC];
-        G --> H[Push to DVC Remote (S3)];
-        F -- Failure --> I[Create Issue & Notify];
-    end
-    
-    subgraph "ML Experiment"
-        J(ML Training Script) -->|dvc pull| K(Versioned Dataset);
-        J -->|Log to| L(MLflow Tracking Server);
-        K --> J;
-    end
+import pytest
+from pydantic import ValidationError
+from src.core.schemas import RobotPose, JointState, RTDECommand
 
-    H -.-> K;
+def test_robot_pose_validation():
+    """TCP Pose 입력 데이터 유효성 검사 테스트"""
+    # 정상 케이스
+    valid_pose = [0.4, 0.2, 0.3, 0.0, 3.14, 0.0]
+    pose = RobotPose(point=valid_pose)
+    assert pose.point == valid_pose
+
+    # 비정상 케이스 1: 요소 개수 부족
+    with pytest.raises(ValidationError):
+        RobotPose(point=[0.1, 0.2])
+
+    # 비정상 케이스 2: 안전 작업 반경 초과 (x > 1.0)
+    with pytest.raises(ValidationError) as excinfo:
+        RobotPose(point=[1.5, 0.0, 0.5, 0.0, 0.0, 0.0])
+    assert "Target point out of safety reach" in str(excinfo.value)
+
+def test_joint_state_validation():
+    """관절 각도 입력 데이터 유효성 검사 테스트"""
+    # 정상 케이스 (6-DOF)
+    valid_joints = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+    joints = JointState(joints=valid_joints)
+    assert len(joints.joints) == 6
+
+    # 비정상 케이스: 7개 요소 입력
+    with pytest.raises(ValidationError):
+        JointState(joints=[0, 0, 0, 0, 0, 0, 0])
+
+def test_rtde_command_schema():
+    """RTDE 명령어 패킷 구조 검증"""
+    cmd = RTDECommand(
+        command_type="moveL",
+        target=[0.4, 0.2, 0.3, 0.0, 3.14, 0.0],
+        velocity=0.1,
+        acceleration=0.5
+    )
+    assert cmd.command_type == "moveL"
+    assert cmd.async_execution is False

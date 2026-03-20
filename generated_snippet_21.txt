@@ -1,8 +1,15 @@
+robot:
+  ip: "127.0.0.1" # Default for URSim on localhost
+  rtde_control_port: 30004
+  rtde_receive_port: 30004
+  frequency: 500 # Internal RTDE frequency
 
---- TASK 6 RAW OUTPUT ---
+logging:
+  enabled: true
+  sample_rate_hz: 10
+  log_dir: "logs"
+  file_prefix: "ur5e_joint_data"
 
-MLOps 엔지니어로서, URSim에서 수집한 관절값 데이터의 JSON 저장 파이프라인, 데이터 검증 모듈, 그리고 MLOps 플랫폼 연동 계획을 구현하겠습니다. 이는 AI 모델 학습에 사용될 데이터의 품질과 재현성을 보장하는 핵심적인 단계입니다.
-
-### **1. 자동화된 데이터 수집 및 저장 파이프라인**
-
-기존의 `DataLogger`를 수정하여, 각 데이터 포인트를 한 줄에 하나의 JSON 객체로 저장하는 JSON Lines (`.jsonl`) 형식으로 데이터를 기록하도록 개선합니다. 이 방식은 실시간 로깅 중 예기치 않은 중단이 발생하더라도 파일의 무결성을 보장하며, 대용량 데이터 처리에도 효율적입니다.
+commands:
+  default_velocity: 0.2
+  default_acceleration: 1.2

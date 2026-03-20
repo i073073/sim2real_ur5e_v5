@@ -1,4 +1,24 @@
+import numpy as np
+from src.mlops.schemas import JointDataPoint
 
-### 2.2. PPO 학습 스크립트 (`src/train_rl_policy.py`)
+class DataQualityController:
+    """데이터 품질 관리 로직: 이상치 및 노이즈 탐지"""
+    def __init__(self, velocity_threshold=2.0):
+        self.velocity_threshold = velocity_threshold
+        self.last_point = None
 
-모방 학습 모델의 가중치를 PPO 정책 네트워크의 초기값으로 사용하여 학습 효율을 높입니다.
+    def validate_stream(self, point: JointDataPoint) -> JointDataPoint:
+        # 1. 급격한 불연속성 체크 (Jump Detection)
+        if self.last_point:
+            diff = np.abs(np.array(point.joints) - np.array(self.last_point.joints))
+            if np.any(diff > 0.5): # 0.1초 내에 0.5rad 이상 변할 경우 이상치로 간주
+                point.is_valid = False
+                point.error_msg = "Sudden joint jump detected"
+        
+        # 2. 속도 임계값 체크
+        if np.any(np.abs(point.velocities) > self.velocity_threshold):
+            point.is_valid = False
+            point.error_msg = "Velocity limit exceeded"
+
+        self.last_point = point
+        return point

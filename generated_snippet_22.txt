@@ -1,4 +1,43 @@
+import rtde_control
+import rtde_receive
+import time
+import logging
 
-### **2. 데이터 유효성 검증 모듈**
+class UR5eCommandLibrary:
+    def __init__(self, ip: str):
+        try:
+            self.rtde_c = rtde_control.RTDEControlInterface(ip)
+            self.rtde_r = rtde_receive.RTDEReceiveInterface(ip)
+            self.is_connected = True
+            logging.info(f"Connected to UR5e at {ip}")
+        except Exception as e:
+            self.is_connected = False
+            logging.error(f"Failed to connect to UR5e: {e}")
 
-수집된 데이터의 품질을 보장하기 위해 `Pydantic`을 사용한 데이터 검증 모듈을 구현합니다. 이 모듈은 데이터의 스키마, 값의 범위, 타임스탬프의 일관성, 수집 주기 등을 검사하여 데이터의 신뢰성을 확보합니다.
+    def moveJ(self, q: list, speed: float = 1.0, accel: float = 1.2, asynchronous: bool = False):
+        """Move to joint position (radians)"""
+        return self.rtde_c.moveJ(q, speed, accel, asynchronous)
+
+    def moveL(self, pose: list, speed: float = 0.25, accel: float = 1.2, asynchronous: bool = False):
+        """Move to tool position (TCP)"""
+        return self.rtde_c.moveL(pose, speed, accel, asynchronous)
+
+    def speedJ(self, qd: list, accel: float = 0.5, time_val: float = 0.0):
+        """Joint speed control"""
+        return self.rtde_c.speedJ(qd, accel, time_val)
+
+    def stopJ(self, accel: float = 2.0):
+        """Stop joint motion"""
+        return self.rtde_c.stopJ(accel)
+
+    def get_actual_q(self):
+        """Get current joint positions"""
+        return self.rtde_r.getActualQ()
+
+    def get_actual_tcp(self):
+        """Get current TCP pose"""
+        return self.rtde_r.getActualTCPPose()
+
+    def disconnect(self):
+        self.rtde_c.disconnect()
+        self.rtde_r.disconnect()
