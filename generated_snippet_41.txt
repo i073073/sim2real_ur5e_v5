@@ -1,25 +1,6 @@
 
-**5.4. 결론 및 향후 계획**
+## 3. Streamlit 기반 성능 비교 대시보드
 
-*   **결론:** 모방 학습 모델을 초기 정책으로 활용한 강화학습은 UR5e 로봇의 제어 모델을 성공적으로 개선했습니다. 특히, GA와 BO를 활용한 계층적 최적화 전략은 RL 정책의 효율성과 성능을 극대화하는 데 기여했습니다.
-*   **향후 계획:**
-    1.  **Sim2Real 전환:** 시뮬레이션 환경에서 학습된 RL 정책을 실제 UR5e 로봇에 배포하여 실환경 검증을 수행합니다.
-    2.  **도메인 무작위화 (Domain Randomization):** Sim2Real Gap을 줄이기 위해, 시뮬레이션 환경에서 물리 파라미터(마찰, 관성)를 무작위로 변경하며 학습하여 정책의 일반화 능력을 향상시킵니다.
-    3.  **Hindsight Experience Replay (HER):** 실패한 에피소드에서도 학습할 수 있도록 HER 기법을 적용하여 데이터 효율성을 높입니다.
+Streamlit을 사용하여 성능 분석 결과를 시각화하는 대시보드를 구현합니다.
 
---- TASK 11 RAW OUTPUT ---
-
-# URScript Program Parsing and Point Classification UI Implementation
-
-## 1. 개요
-
-본 문서는 기존 URScript 로봇 공정 프로그램 파일을 불러와 파싱하고, 추출된 웨이포인트(Waypoint)를 사용자 친화적인 UI를 통해 분류하는 모듈을 구현합니다. 이 모듈은 Planning Agent의 전처리 단계로, 로봇 전문가가 정의한 핵심 공정 포인트를 AI 에이전트에게 전달하여 궤적 최적화의 제약 조건으로 활용할 수 있도록 합니다.
-
-**구현 목표:**
-
-1.  **URScript 파서 모듈:** URScript 파일에서 `movej`, `movel` 등의 이동 명령어를 파싱하여 웨이포인트 정보를 추출합니다.
-2.  **포인트 분류 UI:** Streamlit을 사용하여 파싱된 포인트를 표시하고, 사용자가 각 포인트를 '필수(Required)', '선택(Optional)', '삭제(Delete)'로 분류할 수 있는 인터페이스를 제공합니다.
-
-## 2. URScript 파싱 모듈 구현
-
-`URScriptParser` 클래스는 URScript 파일의 내용을 읽어 지정된 이동 명령어를 정규 표현식(Regular Expression)을 사용하여 분석합니다. 파싱된 각 웨이포인트는 `Waypoint` Pydantic 모델로 변환되어 반환됩니다.
+### 3.1. 대시보드 UI 구현 (`src/dashboard_ui.py`)

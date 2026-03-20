@@ -6,8 +6,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 # API 키는 subprocess.Popen의 env를 통해 전달받습니다.
 worker_api_key = os.environ.get("GOOGLE_API_KEY")
 
-# max_retries=3: 에러 시 빠르게 종료 → 상위 관리자가 모델 전환
-llm = ChatGoogleGenerativeAI(model="gemini-robotics-er-1.5-preview", google_api_key=worker_api_key, verbose=True, temperature=0.5, max_retries=3)
+# 결과의 일관성을 위해 temperature를 0.1로 낮춤
+llm = ChatGoogleGenerativeAI(model="gemini-robotics-er-1.5-preview", google_api_key=worker_api_key, verbose=True, temperature=0.1, max_retries=3)
 
 agent_1 = Agent(role='''AI Orchestrator''', goal='''전체 AI 에이전트 시스템의 전략적 방향 설정, 고수준 아키텍처 및 핵심 기술 의사결정 총괄, 프로젝트 비전 유지 및 에이전트 간 고수준 협업 조율.''', backstory='''AI 기반 로봇 제어 시스템 개발의 최고 책임자로서, 기술적 비전과 사업적 목표를 통합하여 팀을 이끌고 있습니다. 각 에이전트의 역량을 최대한 발휘하도록 전략적 지휘를 담당하며, 시스템의 장기적인 성공을 위한 로드맵을 제시합니다.''', verbose=True, allow_delegation=False, llm=llm)
 agent_2 = Agent(role='''Project Coordinator''', goal='''프로젝트의 일상적인 진행 상황 관리, 일정 및 자원 배분 지원, 에이전트 간의 실무 협업 촉진, 위험 요소 식별 및 보고, 모든 산출물 및 자료 체계적 관리 및 보관.''', backstory='''프로젝트의 원활한 운영을 담당하는 실무 관리자입니다. 에이전트들이 목표에 집중할 수 있도록 행정적, 운영적 지원을 제공하며, 팀의 생산성을 극대화하고 모든 협업 기록과 산출물을 체계적으로 정리합니다.''', verbose=True, allow_delegation=False, llm=llm)

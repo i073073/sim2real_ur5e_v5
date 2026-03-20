@@ -1,36 +1,8 @@
-# ur5e_sim2real/rviz/ur5e_config.rviz
-# Rviz configuration file for UR5e Sim2Real visualization
 
-Panels:
-  - Class: rviz_default_plugins/Displays
-    Name: Displays
-    ...
-  - Class: rviz_default_plugins/TF
-    Name: TF
-    ...
-Displays:
-  - Class: rviz_default_plugins/Grid
-    Name: Grid
-    ...
-  - Class: rviz_default_plugins/RobotModel
-    Name: RobotModel
-    ...
-  - Class: rviz_default_plugins/TF
-    Name: TF
-    ...
-    # Show all TFs, specifically tcp_link and wrist_3_link
-    Show All Frames: true
-    Show Arrows: true
-    Show Names: true
-    Show Axes: true
-    Frames:
-      - wrist_3_link:
-          Show Axes: true
-          Show Name: true
-      - tcp_link:
-          Show Axes: true
-          Show Name: true
-  - Class: rviz_default_plugins/MarkerArray
-    Name: TCP Trail
-    Topic: /tcp_trail_markers
-    # Set color and size properties here (or let the publisher define them)
+### 5.3. 실행 결과
+
+*   **UI 접속:** 웹 브라우저에서 Streamlit UI에 접속합니다.
+*   **연결:** "Connect" 버튼을 클릭하여 URSim과 RTDE 연결을 시도합니다. 연결 성공 시 "Connected" 상태로 변경됩니다.
+*   **명령어 입력:** "moveJ" 섹션에 목표 관절값을 입력하고 "Execute moveJ" 버튼을 클릭하면 로봇이 해당 위치로 이동합니다.
+*   **실시간 상태 확인:** "Real-time Robot Status" 섹션에서 로봇의 현재 관절 위치, 속도, TCP 포즈가 10Hz 주기로 업데이트되는 것을 확인할 수 있습니다.
+*   **로깅 확인:** `data/robot_log.csv` 파일에 10Hz 주기로 로봇 상태 데이터가 기록됩니다.

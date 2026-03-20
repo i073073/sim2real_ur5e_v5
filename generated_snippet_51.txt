@@ -1,4 +1,4 @@
 
-## 4. 상세 메트릭 리포트 시각화 도구 (Matplotlib)
+### 3.2. VLM 통합을 위한 CrewAI 에이전트 확장 (Mockup)
 
-Streamlit 대시보드에서 사용된 상세 메트릭을 Matplotlib을 사용하여 추가 시각화합니다.
+`Task Planning Agent`가 VLM을 사용하여 시각적 정보를 기반으로 계획을 수정하는 워크플로우를 구현합니다.

@@ -1,37 +1,11 @@
 
---- TASK 10 RAW OUTPUT ---
+### 4.3. 실행 결과
 
-## UR5e 제어 모델 개선 전략 및 구현 보고서 (RL > GA > Bayesian Optimization)
-
-### 1. 모델 개선 전략 개요
-
-기존에 학습된 모방 모델(Imitation Model)은 수집된 전문가 궤적 데이터를 기반으로 로봇의 동작을 정확하게 재현하는 데 성공했습니다. 그러나 모방 학습의 한계는 전문가 데이터에 없는 상황(Out-of-Distribution states)에 대한 적응력이 낮다는 점입니다.
-
-본 모델 개선 전략은 [RL > GA > Bayesian Optimization]의 우선순위에 따라, 모방 모델을 기반으로 강화학습을 적용하여 로봇의 자율성과 적응력을 향상시키는 데 중점을 둡니다.
-
-**개선 목표:**
-
-1.  **자율성 강화 (RL):** 모방 모델을 초기 정책으로 활용하여 강화학습을 수행하고, 새로운 작업 목표나 환경 변화에 능동적으로 대응하는 최적화된 제어 정책을 학습합니다.
-2.  **공정 최적화 (GA):** 강화학습이 어려운 고수준의 궤적 파라미터(예: MoveIt! 2의 경로 계획 파라미터)를 유전 알고리즘으로 최적화하여, 작업 시간을 단축하고 에너지 효율을 높입니다.
-3.  **하이퍼파라미터 튜닝 (Bayesian Optimization):** 강화학습 모델의 하이퍼파라미터를 베이지안 최적화로 튜닝하여, 학습 효율을 극대화하고 최적의 성능을 확보합니다.
-
-### 2. 강화학습 (RL) 기반 제어 정책 학습 (Priority 1)
-
-**2.1. RL 환경 구성 (Sim2Real Environment)**
-
-강화학습을 위해 UR5e 로봇을 위한 시뮬레이션 환경을 OpenAI Gym(또는 Gymnasium) 인터페이스로 구축합니다. 이 환경은 Planning Agent와 Execution Agent의 역할을 통합하며, 로봇의 상태를 관찰하고 행동을 실행하며 보상을 계산합니다.
-
-*   **State Space (관찰 공간):** Perception Agent로부터 수신되는 `WorldState`의 핵심 정보.
-    *   `joint_positions` (6개 관절 위치)
-    *   `joint_velocities` (6개 관절 속도)
-    *   `end_effector_pose` (TCP 위치 및 방향)
-    *   `goal_pose` (목표 TCP 위치)
-*   **Action Space (행동 공간):** Execution Agent가 실행하는 저수준 제어 명령.
-    *   `joint_velocity_commands` (6개 관절 속도 명령, [-1.0, 1.0] rad/s)
-*   **Reward Function (보상 함수):** 로봇이 목표를 달성하고 안전하게 움직이도록 유도하는 보상 설계.
-    *   $Reward = -w_{dist} \cdot Distance(current\_pose, goal\_pose) - w_{coll} \cdot CollisionPenalty - w_{vel} \cdot \sum |action|$
-        *   $w_{dist}$: 목표까지의 거리 감소에 대한 보상.
-        *   $w_{coll}$: 충돌 발생 시 큰 페널티.
-        *   $w_{vel}$: 불필요한 움직임(에너지 소비)에 대한 페널티.
-
-**2.2. RL 환경 구현 (Mockup)**
+*   **UI 접속:** 웹 브라우저에서 Streamlit UI에 접속합니다.
+*   **파일 업로드:** 사이드바의 "Program Upload" 섹션에서 `data/mock_program.txt` 파일을 업로드합니다.
+*   **포인트 분류:** UI에 파싱된 웨이포인트 목록이 표시됩니다. 각 웨이포인트 옆의 라디오 버튼을 사용하여 "필수", "선택", "삭제" 중 하나를 선택합니다.
+    *   **예시 분류:**
+        *   `wp_001` (Home position): "필수" (시작/종료 지점)
+        *   `wp_003` (Pick position): "필수" (핵심 작업 지점)
+        *   `wp_006` (Move to place area): "선택" (경로 최적화 가능 지점)
+*   **결과 저장:** "Save Classification Results" 버튼을 클릭하면 분류 결과가 `data/mock_program.txt_classified.json` 파일로 저장됩니다.

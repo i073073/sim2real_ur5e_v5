@@ -1,0 +1,29 @@
+# config/ur5e_sim_config.yaml
+# Genesis 시뮬레이터 환경 설정 파일
+
+# 1. 로봇 모델 설정
+robot_model:
+  name: "ur5e"
+  urdf_path: "data/ur5e/ur5e.urdf" # UR5e URDF 파일 경로 (가정)
+  initial_joint_positions: [0.0, -1.57, 1.57, -1.57, -1.57, 0.0] # 초기 관절값 (rad)
+
+# 2. TCP (Tool Center Point) 설정
+# Sim2Real 갭 분석을 위한 TCP 오프셋 정의 (mm)
+# 실제 로봇의 툴 캘리브레이션 오차를 시뮬레이션에 반영
+tcp_offset:
+  x: 0.0
+  y: 0.0
+  z: 50.0 # 50mm Z축 오프셋
+
+# 3. 시뮬레이션 환경 설정
+environment:
+  gravity: [0.0, 0.0, -9.81]
+  floor_plane: true
+  camera_position: [1.5, 1.5, 1.5]
+  camera_target: [0.0, 0.0, 0.0]
+
+# 4. 시각화 설정
+visualization:
+  trail_length: 100 # 포인트 트레일 길이 (프레임 수)
+  trail_color: [0.0, 0.8, 0.0] # 트레일 색상 (RGB)
+  tcp_marker_color: [1.0, 0.0, 0.0] # TCP 마커 색상 (RGB)

@@ -1,0 +1,36 @@
+graph TD
+    subgraph High-Level Planning Layer (CrewAI)
+        A[User Goal Input] --> B(Task Planning Agent);
+        B --> C{Task Decomposition};
+        C --> D(Path Planning Agent);
+        D --> E[Trajectory Plan (Pydantic Model)];
+    end
+
+    subgraph Low-Level Execution Layer (ROS2/RTDE)
+        E --> F(Motor Control Agent);
+        F --> G{Sim/Real Interface};
+        G --> H1(Simulation Environment: Gazebo);
+        G --> H2(Real Robot: UR5e via RTDE);
+        H1 --> I1(Sim Feedback);
+        H2 --> I2(Real Feedback);
+        I1 --> J(State Estimation Agent);
+        I2 --> J;
+    end
+
+    subgraph Feedback Loop & Learning Layer
+        J --> K(Safety Monitoring Agent);
+        J --> L(Decision Making Agent);
+        K --> M{Safety Check};
+        M -- OK --> L;
+        M -- Collision/Error --> N(Emergency Stop);
+        L -- Plan OK --> O(Experience Replay Agent);
+        L -- Plan Failed --> B;
+        O --> P(Policy Update Agent);
+        P --> B;
+    end
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style E fill:#ccf,stroke:#333,stroke-width:2px
+    style H1 fill:#fcc,stroke:#333,stroke-width:2px
+    style H2 fill:#fcc,stroke:#333,stroke-width:2px
+    style N fill:#f00,stroke:#333,stroke-width:2px

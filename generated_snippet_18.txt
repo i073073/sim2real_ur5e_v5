@@ -1,4 +1,4 @@
 
-### 3.3. 실행 환경 설정 (requirements.txt)
+### 2.2. 데이터 품질 관리 모듈 (`src/data_quality_manager.py`)
 
-Streamlit 애플리케이션 및 RTDE 통신에 필요한 Python 라이브러리 목록입니다.
+Pydantic 모델을 사용하여 스키마 유효성을 검사하고, 추가적인 비즈니스 로직 기반의 데이터 품질 검사를 수행합니다.

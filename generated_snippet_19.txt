@@ -1,23 +1,4 @@
 
-### 3.4. 실행 방법
+## 3. RTDE 클라이언트 및 JSON 저장 파이프라인 구현
 
-1.  **URSim 실행:** URSim 시뮬레이터를 실행하고, 로봇 컨트롤러가 켜져 있는지 확인합니다.
-2.  **의존성 설치:** `pip install -r requirements.txt` 명령어를 사용하여 필요한 라이브러리를 설치합니다.
-3.  **Streamlit UI 실행:** `streamlit run src/streamlit_app.py` 명령어를 사용하여 UI를 시작합니다.
-4.  **연결 및 제어:** UI에서 "Connect" 버튼을 눌러 로봇과 연결하고, `moveJ` 또는 `speedJ` 명령을 입력하여 로봇을 제어합니다. "Start Logging" 버튼을 누르면 `data/ur5e_joint_log.csv` 파일에 관절값이 10Hz로 기록됩니다.
-
---- TASK 5 RAW OUTPUT ---
-
-**QA Engineer Test Report**
-
-**1. 테스트 개요**
-
-*   **테스트 목표:** UR5e 로봇 제어 시스템의 Execution Agent 핵심 기능인 RTDE 통신 및 명령어 라이브러리(movej, speedj)의 기능적 정확성 및 안정성을 검증합니다.
-*   **테스트 대상 모듈:** `src/ur_rtde_client.py` (UR RTDE 통신 클라이언트 및 명령어 라이브러리)
-*   **테스트 환경:** URSim 시뮬레이터 (IP: 127.0.0.1) 또는 실제 UR5e 로봇 (IP: 192.168.1.102)
-*   **테스트 버전:** v1.0.0 (Execution Agent Implementation)
-*   **테스트 일시:** 2023-10-27
-
-**2. 테스트 스크립트: UR5e RTDE 기능 검증**
-
-다음은 `ur_rtde_client.py` 모듈의 핵심 기능을 검증하기 위한 Python 테스트 스크립트입니다. 이 스크립트는 URSim 시뮬레이션 환경 또는 실제 로봇 환경에서 실행될 수 있도록 설계되었습니다.
+기존 `rtde_client.py`를 수정하여 `DataQualityManager`를 통합하고, 수집된 데이터를 JSON 형식으로 저장합니다.

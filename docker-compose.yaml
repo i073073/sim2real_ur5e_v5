@@ -1,0 +1,29 @@
+# docker-compose.yaml
+version: '3.8'
+services:
+  planning_agent:
+    build: ./planning_agent
+    container_name: planning_agent
+    environment:
+      - ROS_DOMAIN_ID=0
+    volumes:
+      - ./config:/app/config
+    # ...
+
+  execution_agent:
+    build: ./execution_agent
+    container_name: execution_agent
+    environment:
+      - ROS_DOMAIN_ID=0
+      - ROBOT_IP=192.168.1.100 # 실제 로봇 IP
+    volumes:
+      - ./config:/app/config
+    # ...
+
+  gazebo_sim:
+    image: osrf/ros:humble-desktop-full
+    container_name: gazebo_sim
+    environment:
+      - ROS_DOMAIN_ID=0
+    command: "ros2 launch ur_gazebo ur5e_bringup.launch.py"
+    # ...
